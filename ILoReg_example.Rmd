@@ -1,0 +1,70 @@
+---
+title: "ILoReg S4 package example"
+output: html_notebook
+---
+
+
+
+```{r}
+data <- Seurat::LogNormalize(Seurat::Read10X("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"))
+```
+
+
+```{r}
+library(ILoReg)
+iloreg_object <- CreateILoRegObject(normalized.data = data)
+```
+
+
+```{r}
+iloreg_object <- RunILoRegConsensus(iloreg_object,threads = 3,L = 50)
+```
+
+
+```{r}
+VisualizeConsensusInformation(iloreg_object)
+```
+
+Run PCA and tSNE or UMAP
+```{r}
+iloreg_object <- ILoReg::RunPCA(iloreg_object,number.of.pcs = 50,scale = FALSE)
+iloreg_object <- ILoReg::RunUMAP(iloreg_object)
+iloreg_object <- ILoReg::RunTSNE(iloreg_object,perplexity=30)
+```
+
+
+Hierarchical clustering
+```{r}
+iloreg_object <- HierarchicalClustering(iloreg_object)
+```
+
+
+Calculate silhouette information for K in 2:50
+```{r}
+iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:50)
+SilhouetteCurve(iloreg_object)
+```
+
+Select K=20 clusters from the dendrogram
+```{r}
+iloreg_object <- ManualClustering(iloreg_object,K=20)
+```
+
+
+
+
+```{r}
+GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "umap")
+GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "tsne")
+```
+
+
+```{r}
+
+ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "umap")
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
+ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "tsne")
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
+
+```
+

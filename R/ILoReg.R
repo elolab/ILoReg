@@ -765,6 +765,7 @@ setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=F
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @import ggplot2
+#' @importFrom scales muted
 
 #' @export
 #' @examples
