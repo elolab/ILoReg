@@ -114,24 +114,26 @@ gene_markers_C_R <- FindGeneMarkers(iloreg_object,clusters.1 = "C",clusters.2 = 
 ```
 
 
-
+Select top 10 and top 3 genes based on log2 fold-change
 ```{r}
 library(dplyr)
 
 gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
+gene_markers %>% group_by(cluster) %>% top_n(3, log2FC) -> top3
 ```
 
 
+Make gene scatter plots
 ```{r Fig1, echo=TRUE, fig.height=20, fig.width=20}
-cowplot::plot_grid(plotlist = lapply(top10$gene,function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
+cowplot::plot_grid(plotlist = lapply(unique(top3$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
 ```
 
 
 ```{r Fig2, echo=TRUE, fig.height=20, fig.width=25}
-VlnPlot(iloreg_object,clustering.type = "optimal",genes = top10$gene)
+VlnPlot(iloreg_object,clustering.type = "optimal",genes = unique(top3$gene))
 ```
 
-
+Make gene heatmap
 ```{r Fig5, echo=TRUE, fig.height=15, fig.width=15}
 GeneHeatmap(iloreg_object,clustering.type = "manual",gene.markers = top10)
 
