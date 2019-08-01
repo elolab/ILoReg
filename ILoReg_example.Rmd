@@ -58,13 +58,81 @@ GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "umap")
 GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "tsne")
 ```
 
-
+Visualize tSNE and UMAP transformations with the two clusterings
 ```{r}
-
 ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "umap")
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
 ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "tsne")
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
+```
+
+Merge two clusters
+```{r}
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 10 and 9")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(10,9))
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 10 and 9")
+```
+
+
+```{r}
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
+iloreg_object <- RenameClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
+ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
+```
+
+Find gene markers for the automatic clustering
+```{r}
+
+gene_markers <- FindAllGeneMarkers(iloreg_object,
+                                   clustering.type = "optimal",
+                                   test = "wilcox",
+                                   logfc.threshold = 0.25,
+                                   min.pct = 0.25,
+                                   min.diff.pct = 0.25,
+                                   pseudocount.use = 1,
+                                   min.cells.cluster = 3,
+                                   return.thresh = 0.01,
+                                   only.pos = FALSE)
+
+```
+
+Find gene markers for clusters C and R from the manual clustering
+```{r}
+
+gene_markers_C_R <- FindGeneMarkers(iloreg_object,clusters.1 = "C",clusters.2 = "R",
+                                   clustering.type = "manual",
+                                   test = "wilcox",
+                                   logfc.threshold = 0.25,
+                                   min.pct = 0.25,
+                                   min.diff.pct = 0.25,
+                                   pseudocount.use = 1,
+                                   min.cells.cluster = 3,
+                                   return.thresh = 0.01,
+                                   only.pos = FALSE)
+
+```
+
+
+
+```{r}
+library(dplyr)
+
+gene_markers %>% group_by(cluster) %>% top_n(3, log2FC) -> top3
+```
+
+
+```{r Fig1, echo=TRUE, fig.height=20, fig.width=20}
+cowplot::plot_grid(plotlist = lapply(top3$gene,function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
+```
+
+
+```{r Fig2, echo=TRUE, fig.height=20, fig.width=25}
+ILoReg::VlnPlot(iloreg_object,clustering.type = "optimal",genes = top3$gene)
+```
+
+
+```{r}
+ILoReg::GeneHeatmap(iloreg_object,clustering.type = "optimal",genes = top3$gene)
 
 ```
 

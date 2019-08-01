@@ -808,13 +808,13 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
-    print(p)
-
-
 
     if (return.plot) {
       return(p)
     }
+
+    print(p)
+
   }
 })
 
