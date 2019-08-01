@@ -1364,7 +1364,7 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
 
 setGeneric("GeneHeatmap", function(iloreg.object=NULL,
                                clustering.type="",
-                               genes="",
+                               gene.markers=data.frame(),
                                return.plot=FALSE){
   standardGeneric("GeneHeatmap")
 })
@@ -1384,20 +1384,18 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #'
 #' @param iloreg.object object of class 'iloreg'
 #' @param clustering.type object of class 'iloreg'
-#' @param genes object of class 'iloreg'
+#' @param gene.markers object of class 'iloreg'
 #' @param return.plot object of class 'iloreg'
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
-#' @import ggplot2
-#' @importFrom grid textGrob gpar
-#' @importFrom RColorBrewer brewer.pal
+#' @import pheatmap
 
 #' @export
 #' @examples
 #' a <- c(0,1,2)
 setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
                                         clustering.type,
-                                        genes,
+                                        gene.markers,
                                         return.plot)
 {
 
@@ -1412,44 +1410,20 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
   }
 
   data <- iloreg.object@normalized.data
-  data <- t(data[genes,])
-  data <- scale(data,center = TRUE,scale = TRUE)
-  data <- data[order(clustering),]
-
-  # Clip values
-  data[data < -2.5] <- -2.5
-  data[data > 2.5] <- 2.5
+  data <- data[unique(gene.markers$gene),]
+  # data <- scale(data,center = TRUE,scale = TRUE)
+  data <- data[,order(clustering)]
 
 
-  df <- as.numeric(data)
-  df <- data.frame(matrix(df,ncol = 1,dimnames = list(1:length(df),"expression")))
-  df$gene  <- unlist(lapply(genes,function(x) rep(x,nrow(data))))
-  df$gene <- factor(df$gene)
-  df$cluster <- rep(rownames(data),length(genes))
-  df$cluster <- factor(df$cluster)
+  # Generate column annotations
+  annotation = data.frame(cluster=sort(clustering))
 
-
-  text_high <- textGrob("Highest\nvalue", gp=gpar(fontsize=13, fontface="bold"))
-  text_low <- textGrob("Lowest\nvalue", gp=gpar(fontsize=13, fontface="bold"))
-
-  p <- ggplot(df, aes(cluster,gene)) +
-    geom_tile(aes(fill = expression), colour = NA) +
-    scale_fill_gradientn(colours=rev(brewer.pal(11,"RdYlBu"))) +
-    theme(axis.text.x = element_blank(),
-          axis.title.x = element_text(),
-          axis.ticks.x = element_blank(),
-          legend.position = "top",
-          plot.margin = unit(c(1,1,2,1), "lines")) +
-    annotation_custom(text_high,xmin=100,xmax=100,ymin=-0.07,ymax=-0.07) +
-    annotation_custom(text_low,xmin=200,xmax=200,ymin=-0.07,ymax=-0.07) +
-    coord_cartesian(clip = "off")
-
-  print(p)
-
-  if (return.plot)
-  {
-    return(p)
-  }
+  pheatmap(data,show_colnames = FALSE,
+                     gaps_col = cumsum(table(clustering[order(clustering)])),
+                     gaps_row = cumsum(table(gene.markers[!duplicated(gene.markers$gene),"cluster"])),
+                     cluster_rows = FALSE,
+                     cluster_cols = FALSE,
+                     annotation_col = annotation)
 
 
 
