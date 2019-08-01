@@ -893,11 +893,12 @@ setMethod("ClusterScatterPlot", "iloreg", function(iloreg.object,clustering.type
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.line = element_line(colour = "black")) +
     annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(color.by))
-  plot(p)
 
   if (return.plot) {
     return(p)
   }
+
+  plot(p)
 
 })
 
