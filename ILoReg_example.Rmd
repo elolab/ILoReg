@@ -67,10 +67,11 @@ ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
 ```
 
 Merge two clusters
-```{r}
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 10 and 9")
+```{r Fig4, echo=TRUE, fig.height=7, fig.width=14}
+p1 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 10 and 9")
 iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(10,9))
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 10 and 9")
+p2 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 10 and 9")
+cowplot::plot_grid(p1,p2)
 ```
 
 

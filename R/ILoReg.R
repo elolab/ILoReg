@@ -1434,7 +1434,7 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
 
   p <- ggplot(df, aes(cluster,gene)) +
     geom_tile(aes(fill = expression), colour = NA) +
-    scale_fill_gradientn(colours=brewer.pal(11,"RdYlBu")) +
+    scale_fill_gradientn(colours=rev(brewer.pal(11,"RdYlBu"))) +
     theme(axis.text.x = element_blank(),
           axis.title.x = element_text(),
           axis.ticks.x = element_blank(),
