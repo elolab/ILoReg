@@ -129,8 +129,8 @@ cowplot::plot_grid(plotlist = lapply(unique(top3$gene),function(x) GeneScatterPl
 ```
 
 
-```{r Fig2, echo=TRUE, fig.height=20, fig.width=25}
-VlnPlot(iloreg_object,clustering.type = "optimal",genes = unique(top3$gene))
+```{r Fig2, echo=TRUE, fig.height=20, fig.width=40}
+VlnPlot(iloreg_object,clustering.type = "manual",genes = unique(top3$gene))
 ```
 
 Make gene heatmap
