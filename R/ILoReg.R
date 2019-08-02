@@ -1364,8 +1364,7 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
 
 setGeneric("GeneHeatmap", function(iloreg.object=NULL,
                                clustering.type="",
-                               gene.markers=data.frame(),
-                               return.plot=FALSE){
+                               gene.markers=data.frame()){
   standardGeneric("GeneHeatmap")
 })
 
@@ -1385,7 +1384,6 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #' @param iloreg.object object of class 'iloreg'
 #' @param clustering.type object of class 'iloreg'
 #' @param gene.markers object of class 'iloreg'
-#' @param return.plot object of class 'iloreg'
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @import pheatmap
@@ -1395,8 +1393,7 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #' a <- c(0,1,2)
 setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
                                         clustering.type,
-                                        gene.markers,
-                                        return.plot)
+                                        gene.markers)
 {
 
   if (clustering.type=="manual")

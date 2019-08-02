@@ -6,8 +6,7 @@
 \title{Iterative logistic regression (ILoReg) consensus clustering}
 \usage{
 \S4method{GeneHeatmap}{iloreg}(iloreg.object = NULL,
-  clustering.type = "", gene.markers = data.frame(),
-  return.plot = FALSE)
+  clustering.type = "", gene.markers = data.frame())
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -15,8 +14,6 @@
 \item{clustering.type}{object of class 'iloreg'}
 
 \item{gene.markers}{object of class 'iloreg'}
-
-\item{return.plot}{object of class 'iloreg'}
 }
 \value{
 iloreg Object

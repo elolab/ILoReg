@@ -1,31 +1,32 @@
 ---
-title: "ILoReg S4 package example"
+title: "ILoReg example"
 output: html_notebook
 ---
 
 
-
+Read 10X Chromium PBMC data and log normalize them 
 ```{r}
 data <- Seurat::LogNormalize(Seurat::Read10X("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"))
 ```
 
-
+Create object of iloreg class
 ```{r}
 library(ILoReg)
 iloreg_object <- CreateILoRegObject(normalized.data = data)
 ```
 
-
+Run consensus ILoReg. This is the slowest step of the workflow and parallel processing highly speeds up the process. 
 ```{r}
 iloreg_object <- RunILoRegConsensus(iloreg_object,threads = 3,L = 50)
 ```
 
 
+Visualize distributions of the final ARI acquired by ILoReg and the number of iterations.
 ```{r}
 VisualizeConsensusInformation(iloreg_object)
 ```
 
-Run PCA and tSNE or UMAP
+Run PCA over the consensus probability matrix and tSNE or UMAP
 ```{r}
 iloreg_object <- ILoReg::RunPCA(iloreg_object,number.of.pcs = 50,scale = FALSE)
 iloreg_object <- ILoReg::RunUMAP(iloreg_object)
@@ -33,32 +34,32 @@ iloreg_object <- ILoReg::RunTSNE(iloreg_object,perplexity=30)
 ```
 
 
-Hierarchical clustering
+Clustering of the PCA-rotated data using Ward's agglomeration
 ```{r}
 iloreg_object <- HierarchicalClustering(iloreg_object)
 ```
 
 
-Calculate silhouette information for K in 2:50
+Calculate the silhouette information for K in 2:50 and visualize the average silhouette values. Moreover, the clustering acquired using K with the highest average silhouette is saved to *clustering.optimal* slot.
 ```{r}
 iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:50)
 SilhouetteCurve(iloreg_object)
 ```
 
-Select K=20 clusters from the dendrogram
+Manually select K=20 clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
 ```{r}
 iloreg_object <- ManualClustering(iloreg_object,K=20)
 ```
 
 
 
-
+Visualize expression of CD8B gene across the cells - a CD8+ T cell marker.
 ```{r}
 GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "umap")
 GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "tsne")
 ```
 
-Visualize tSNE and UMAP transformations with the two clusterings
+Visualize tSNE and UMAP transformations along with the optimal and manual clusterings.
 ```{r}
 ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "umap")
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
@@ -66,7 +67,7 @@ ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "tsne")
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
 ```
 
-Merge two clusters
+Merge two clusters (10 and 9)
 ```{r Fig4, echo=TRUE, fig.height=7, fig.width=14}
 p1 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 10 and 9")
 iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(10,9))
@@ -74,14 +75,14 @@ p2 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",retu
 cowplot::plot_grid(p1,p2)
 ```
 
-
+Rename clusters to letters
 ```{r}
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
 iloreg_object <- RenameClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
 ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
 ```
 
-Find gene markers for the automatic clustering
+Find gene markers for the manual clustering
 ```{r}
 
 gene_markers <- FindAllGeneMarkers(iloreg_object,
@@ -114,26 +115,26 @@ gene_markers_C_R <- FindGeneMarkers(iloreg_object,clusters.1 = "C",clusters.2 = 
 ```
 
 
-Select top 10 and top 3 genes based on log2 fold-change
+Select top 10 and top 1 genes based on log2 fold-change
 ```{r}
 library(dplyr)
 
 gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
-gene_markers %>% group_by(cluster) %>% top_n(3, log2FC) -> top3
+gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
 ```
 
 
-Make gene scatter plots
+Make gene expression scatter plots of the top 1 markers
 ```{r Fig1, echo=TRUE, fig.height=20, fig.width=20}
-cowplot::plot_grid(plotlist = lapply(unique(top3$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
+cowplot::plot_grid(plotlist = lapply(unique(top1$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
 ```
 
-
+Make gene expression violin plots of the top 1 markers
 ```{r Fig2, echo=TRUE, fig.height=20, fig.width=40}
-VlnPlot(iloreg_object,clustering.type = "manual",genes = unique(top3$gene))
+VlnPlot(iloreg_object,clustering.type = "manual",genes = unique(top1$gene))
 ```
 
-Make gene heatmap
+Make gene marker heatmap for the manual clustering
 ```{r Fig5, echo=TRUE, fig.height=15, fig.width=15}
 GeneHeatmap(iloreg_object,clustering.type = "manual",gene.markers = top10)
 
