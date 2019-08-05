@@ -42,21 +42,21 @@ iloreg_object <- HierarchicalClustering(iloreg_object)
 
 Calculate the silhouette information for K in 2:50 and visualize the average silhouette values. Moreover, the clustering acquired using K with the highest average silhouette is saved to *clustering.optimal* slot.
 ```{r}
-iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:50)
+iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:30)
 SilhouetteCurve(iloreg_object)
 ```
 
 Manually select K=20 clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
 ```{r}
-iloreg_object <- ManualClustering(iloreg_object,K=20)
+iloreg_object <- ManualClustering(iloreg_object,K=25)
 ```
 
 
 
 Visualize expression of CD8B gene across the cells - a CD8+ T cell marker.
 ```{r}
-GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "umap")
-GeneScatterPlot(iloreg_object,"CD8B",dim.reduction.type = "tsne")
+GeneScatterPlot(iloreg_object,"CCR7",dim.reduction.type = "umap")
+GeneScatterPlot(iloreg_object,"CCR7",dim.reduction.type = "tsne")
 ```
 
 Visualize tSNE and UMAP transformations along with the optimal and manual clusterings.
@@ -68,10 +68,10 @@ ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
 ```
 
 Merge two clusters (10 and 9)
-```{r Fig4, echo=TRUE, fig.height=7, fig.width=14}
-p1 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 10 and 9")
-iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(10,9))
-p2 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 10 and 9")
+```{r Fig0, echo=TRUE, fig.height=7, fig.width=14}
+p1 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 23 and 6")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(23,6))
+p2 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 23 and 6")
 cowplot::plot_grid(p1,p2)
 ```
 
@@ -94,14 +94,14 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
                                    pseudocount.use = 1,
                                    min.cells.cluster = 3,
                                    return.thresh = 0.01,
-                                   only.pos = FALSE)
+                                   only.pos = FALSE,max.cells.per.cluster = NULL)
 
 ```
 
-Find gene markers for clusters C and R from the manual clustering
+Find gene markers for clusters F and A from the manual clustering
 ```{r}
 
-gene_markers_C_R <- FindGeneMarkers(iloreg_object,clusters.1 = "C",clusters.2 = "R",
+gene_markers_F_A <- FindGeneMarkers(iloreg_object,clusters.1 = "F",clusters.2 = "A",
                                    clustering.type = "manual",
                                    test = "wilcox",
                                    logfc.threshold = 0.25,
@@ -125,18 +125,25 @@ gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
 
 
 Make gene expression scatter plots of the top 1 markers
-```{r Fig1, echo=TRUE, fig.height=20, fig.width=20}
-cowplot::plot_grid(plotlist = lapply(unique(top1$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "umap",return.plot = T)))
+```{r Fig1, echo=TRUE, fig.height=30, fig.width=30}
+cowplot::plot_grid(plotlist = lapply(unique(top10$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "tsne",return.plot = T)))
 ```
 
+
+
 Make gene expression violin plots of the top 1 markers
-```{r Fig2, echo=TRUE, fig.height=20, fig.width=40}
+```{r Fig3, echo=TRUE, fig.height=20, fig.width=40}
 VlnPlot(iloreg_object,clustering.type = "manual",genes = unique(top1$gene))
 ```
 
 Make gene marker heatmap for the manual clustering
-```{r Fig5, echo=TRUE, fig.height=15, fig.width=15}
+```{r Fig4, echo=TRUE, fig.height=15, fig.width=15}
 GeneHeatmap(iloreg_object,clustering.type = "manual",gene.markers = top10)
 
+```
+
+
+```{r}
+pheatmap::pheatmap(iloreg_object@normalized.data[unique(top10$gene),],show_colnames = FALSE)
 ```
 

@@ -1001,6 +1001,7 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
   for (cluster in clusters)
   {
+    cat("-----------------------------------\n")
     cat(paste0("testing cluster ",cluster,"\n"))
     # Extract data
 
@@ -1010,6 +1011,7 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
     # Skip if the number of cells in the test or the reference set is lower than min.cells.group
     if (ncol(data_cluster) < min.cells.cluster | ncol(data_other) < min.cells.cluster)
     {
+      cat("-----------------------------------\n")
       next
     }
 
@@ -1019,8 +1021,15 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
     genes_to_include <- rownames(data_cluster)[genes.pct_cluster>=min.pct | genes.pct_other >= min.pct]
 
-    data_cluster <- data_cluster[genes_to_include,]
-    data_other <- data_other[genes_to_include,]
+    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+    data_other <- data_other[genes_to_include,,drop=FALSE]
+
+    cat(paste0(nrow(data_cluster)," genes left after min.pct filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
+    }
 
     # min.diff.pct filter
     if (!is.null(min.diff.pct))
@@ -1030,8 +1039,16 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
       genes_to_include <- rownames(data_cluster)[abs(genes.pct_cluster-genes.pct_other) >= min.diff.pct]
 
-      data_cluster <- data_cluster[genes_to_include,]
-      data_other <- data_other[genes_to_include,]
+      data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+      data_other <- data_other[genes_to_include,,drop=FALSE]
+
+    }
+
+    cat(paste0(nrow(data_cluster)," genes left after min.diff.pct filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
     }
 
     # logfc.threshold filter
@@ -1041,10 +1058,18 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
     log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
 
-    genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold]
+    genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold | log2FC <= -logfc.threshold]
 
-    data_cluster <- data_cluster[genes_to_include,]
-    data_other <- data_other[genes_to_include,]
+    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+    data_other <- data_other[genes_to_include,,drop=FALSE]
+
+
+    cat(paste0(nrow(data_cluster)," genes left after logfc.threshold filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
+    }
 
     # Run DE test
 
@@ -1066,6 +1091,7 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
     results_list[[cluster]] <- res
 
+    cat("-----------------------------------\n")
 
   }
 
