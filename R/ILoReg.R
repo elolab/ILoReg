@@ -890,8 +890,7 @@ setMethod("ClusterScatterPlot", "iloreg", function(iloreg.object,clustering.type
     geom_point(size=point.size,aes(color=cluster)) +
     xlab(xlab) +
     ylab(ylab) +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+    theme_classic() +
     annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(color.by))
 
   if (return.plot) {
@@ -1451,4 +1450,99 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
 
 
 })
+
+
+
+
+
+
+
+
+setGeneric("AnnotationScatterPlot", function(iloreg.object=NULL,
+                                   annotation=c(),
+                                   return.plot=FALSE,
+                                   dim.reduction.type="",
+                                   point.size=0.7){
+  standardGeneric("AnnotationScatterPlot")
+})
+
+#' @title Iterative logistic regression (ILoReg) consensus clustering
+#'
+#' @rdname AnnotationScatterPlot
+#' @name AnnotationScatterPlot
+#'
+#' @description
+#' Plot histogram of the ARIs.
+#'
+#' @details
+#' populates a Boolean matrix with the same dimension as nData.
+#' The value is \code{TRUE} for an entry if it
+#' is a dropout candidate; otherwise the value is \code{FALSE}.
+#'
+#' @param iloreg.object object of class 'iloreg'
+#' @param annotation object of class 'iloreg'
+#' @param return.plot object of class 'iloreg'
+#' @param dim.reduction.type asdf
+#' @param point.size asdf
+#' @return iloreg Object
+#' @keywords iterative logistic regression ILoReg consensus clustering
+#' @import ggplot2
+
+#' @export
+#' @examples
+#' a <- c(0,1,2)
+setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
+                                                      annotation,
+                                                      return.plot,
+                                                      dim.reduction.type,
+                                                      point.size)
+{
+
+  if (dim.reduction.type=="umap")
+  {
+    two.dim.data <- iloreg.object@umap.embeddings
+    xlab <- "UMAP_1"
+    ylab <- "UMAP_2"
+  } else if (dim.reduction.type=="tsne"){
+    two.dim.data <- iloreg.object@tsne.embeddings
+    xlab <- "tSNE_1"
+    ylab <- "tSNE_2"
+  } else {
+    stop("dim.reduction.type must be either 'tsne' or 'umap'")
+  }
+
+  annotation <- factor(as.character(annotation))
+  names(annotation) <- colnames(iloreg.object@normalized.data)
+
+  df <- as.data.frame(two.dim.data)
+  df$group <- annotation
+  colnames(df) <- c("dim1","dim2","group")
+
+  two.dim.data_ <- two.dim.data
+  rownames(two.dim.data_) <- names(annotation)
+  cluster_centers <- lapply(levels(annotation),function(x) apply(two.dim.data_[names(annotation)[annotation==x],,drop=FALSE],2,median))
+  cluster_centers <- do.call(rbind,cluster_centers)
+
+  print(head(df))
+  print(levels(annotation))
+
+  p<-ggplot(df, aes(x=dim1, y=dim2)) +
+    geom_point(size=point.size,aes(color=group)) +
+    xlab(xlab) +
+    ylab(ylab) +
+    theme_classic() +
+    annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(annotation))
+
+  if (return.plot)
+  {
+    return(p)
+  } else {
+    print(p)
+  }
+
+
+
+
+})
+
 
