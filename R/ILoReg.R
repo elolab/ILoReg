@@ -963,6 +963,8 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
                                                    only.pos)
 {
 
+  number.of.expressed.genes <- nrow(iloreg.object@normalized.data)
+
   if (clustering.type=="manual")
   {
     clustering <- iloreg.object@clustering.manual
@@ -1079,7 +1081,7 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
       names(p_values) <- rownames(data_cluster)
 
       # Adjust p-values
-      adj_p_values <- p.adjust(p_values, method = "BH", n = length(p_values))
+      adj_p_values <- p.adjust(p_values, method = "bonferroni", n = number.of.expressed.genes)
 
       res <- cbind(p_values,adj_p_values,log2FC[names(p_values)],genes.pct_cluster[names(p_values)],genes.pct_other[names(p_values)],abs(genes.pct_cluster-genes.pct_other)[names(p_values)])
       colnames(res) <- c("p.value","adj.p.value","log2FC","pct.1","pct.2","diff.pct")
