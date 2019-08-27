@@ -219,20 +219,21 @@ setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type
 
     seeds <- sample(1:10^9,L,replace=FALSE)
     iloreg_out <- foreach(task = 1:L,.verbose = FALSE,
-                                     .combine = list,
-                                     .maxcombine = 1000,
-                                     .inorder = FALSE,
-                                     .export = c('RunSingleILoRegClustering','LogisticRegression'),
-                                     .packages=c("tictoc","Matrix","aricode","LiblineaR","SparseM"),
-                                     .multicombine = TRUE)  %dopar%
-      set.seed(seeds[task])
-      RunSingleILoRegClustering(normalized.data = iloreg.object@normalized.data,
-                                k = iloreg.object@k,
-                                d = iloreg.object@d,
-                                r = iloreg.object@r,
-                                C = iloreg.object@C,
-                                type = type,
-                                max.number.of.iterations = max.number.of.iterations)
+                          .combine = list,
+                          .maxcombine = 1000,
+                          .inorder = FALSE,
+                          .export = c('RunSingleILoRegClustering','LogisticRegression'),
+                          .packages=c("tictoc","Matrix","aricode","LiblineaR","SparseM"),
+                          .multicombine = TRUE)  %dopar% {
+                            set.seed(seeds[task])
+                            RunSingleILoRegClustering(normalized.data = iloreg.object@normalized.data,
+                                                      k = iloreg.object@k,
+                                                      d = iloreg.object@d,
+                                                      r = iloreg.object@r,
+                                                      C = iloreg.object@C,
+                                                      type = type,
+                                                      max.number.of.iterations = max.number.of.iterations)
+                          }
     stopCluster(cl)
 
   } else {
