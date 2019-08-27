@@ -200,6 +200,8 @@ setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type
     iloreg.object@threads <- threads
   }
 
+
+
   parallelism <- TRUE
 
   if (threads==0) {
@@ -215,13 +217,15 @@ setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type
 
   if (parallelism) {
 
-    iloreg_out <- foreach(clusters = rep(k,L),.verbose = FALSE,
+    seeds <- sample(1:10^9,L,replace=FALSE)
+    iloreg_out <- foreach(task = 1:L,.verbose = FALSE,
                                      .combine = list,
                                      .maxcombine = 1000,
                                      .inorder = FALSE,
                                      .export = c('RunSingleILoRegClustering','LogisticRegression'),
                                      .packages=c("tictoc","Matrix","aricode","LiblineaR","SparseM"),
                                      .multicombine = TRUE)  %dopar%
+      set.seed(seeds[task])
       RunSingleILoRegClustering(normalized.data = iloreg.object@normalized.data,
                                 k = iloreg.object@k,
                                 d = iloreg.object@d,
