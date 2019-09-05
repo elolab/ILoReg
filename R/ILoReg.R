@@ -126,10 +126,11 @@ setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=
 #' @param max.number.of.iterations A positive integer that denotes the maximum number of iterations performed until the algorithm ends. (default 200)
 #' @return iloreg object
 #' @keywords iterative logistic regression ILoReg consensus clustering
-#' @import foreach
-#' @import doParallel
-#' @import ParallelLogger
-#' @import parallel
+#' @importFrom parallel makeCluster
+#' @importFrom parallel detectCores
+#' @importFrom parallel stopCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach
 #' @import Matrix
 #' @import tictoc
 #' @import aricode
@@ -304,10 +305,11 @@ setMethod("VisualizeConsensusInformation", "iloreg", function(iloreg.object,retu
 
   p <- plot_grid(p1,p2,nrow=1)
 
-  print(p)
 
   if (return.plot) {
     return(p)
+  } else {
+    print(p)
   }
 })
 
@@ -635,11 +637,12 @@ setMethod("SilhouetteCurve", "iloreg", function(iloreg.object,return.plot){
     theme_bw() +
     ggtitle(paste0("AUSC=",auc))
 
-  print(p)
 
   if (return.plot)
   {
     return(p)
+  } else {
+    print(p)
   }
 
 
@@ -863,9 +866,9 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
 
     if (return.plot) {
       return(p)
+    } else {
+      print(p)
     }
-
-    print(p)
 
   }
 })
@@ -947,9 +950,9 @@ setMethod("ClusterScatterPlot", "iloreg", function(iloreg.object,clustering.type
 
   if (return.plot) {
     return(p)
+  } else {
+    plot(p)
   }
-
-  plot(p)
 
 })
 
@@ -1424,7 +1427,7 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
   df$cluster <- rep(as.character(clustering),length(genes))
   df$cluster <- factor(df$cluster)
 
-  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=cluster, y=expression, fill=cluster))+geom_violin(trim=FALSE)+geom_jitter(height = 0, width = 0.1)+ggtitle(x))
+  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=cluster, y=expression, fill=cluster))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x))
 
   p <- plot_grid(plotlist = plotlist)
   print(p)
@@ -1432,6 +1435,8 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
   if (return.plot)
   {
     return(p)
+  } else {
+    print(p)
   }
 
 
@@ -1577,8 +1582,6 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
   cluster_centers <- lapply(levels(annotation),function(x) apply(two.dim.data_[names(annotation)[annotation==x],,drop=FALSE],2,median))
   cluster_centers <- do.call(rbind,cluster_centers)
 
-  print(head(df))
-  print(levels(annotation))
 
   p<-ggplot(df, aes(x=dim1, y=dim2)) +
     geom_point(size=point.size,aes(color=group)) +
