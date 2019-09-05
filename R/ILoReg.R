@@ -364,6 +364,53 @@ setMethod("RunPCA", "iloreg", function(iloreg.object,number.of.pcs,scale){
 })
 
 
+setGeneric("PCAElbowPlot", function(iloreg.object=NULL,return.plot=FALSE){
+  standardGeneric("PCAElbowPlot")
+})
+
+#' @title Iterative logistic regression (ILoReg) consensus clustering
+#'
+#' @rdname PCAElbowPlot
+#' @name PCAElbowPlot
+#'
+#' @description
+#' Plot histogram of the ARIs.
+#'
+#' @details
+#' populates a Boolean matrix with the same dimension as nData.
+#' The value is \code{TRUE} for an entry if it
+#' is a dropout candidate; otherwise the value is \code{FALSE}.
+#'
+#' @param iloreg.object object of class 'iloreg'
+#' @param return.plot logical indicating if the ggplot2 object should be returned (default FALSE)
+#' @return ggplot2 object if return.plot=TRUE
+#' @keywords iterative logistic regression ILoReg consensus clustering
+#' @import ggplot2
+#' @export
+#' @examples
+#' a <- c(0,1,2)
+setMethod("PCAElbowPlot", "iloreg", function(iloreg.object,return.plot){
+
+
+  df <- matrix(apply(iloreg.object@rotated.consensus.probability,2,sd),nrow = ncol(iloreg.object@rotated.consensus.probability),ncol = 1,dimnames = list(1:ncol(iloreg.object@rotated.consensus.probability),"SD"))
+  df <- reshape2::melt(df)
+
+  p<-ggplot(df, aes(x=Var1, y=value)) +
+    geom_line(color="blue")+
+    geom_point(color="black") +
+    theme_bw()+
+    ylab("Standard Deviation")+
+    xlab("PC")
+
+
+  if (return.plot) {
+    return(p)
+  } else {
+    print(p)
+  }
+})
+
+
 
 setGeneric("RunUMAP", function(iloreg.object=NULL){
   standardGeneric("RunUMAP")
