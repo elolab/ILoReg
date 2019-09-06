@@ -315,7 +315,7 @@ setMethod("VisualizeConsensusInformation", "iloreg", function(iloreg.object,retu
 
 
 
-setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE){
+setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE,ari.threshold=0){
   standardGeneric("RunPCA")
 })
 
@@ -335,18 +335,19 @@ setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE){
 #' @param iloreg.object object of class 'iloreg'
 #' @param number.of.pcs logical indicating if the ggplot2 object should be returned (default FALSE)
 #' @param scale logical indicating if the ggplot2 object should be returned (default FALSE)
+#' @param ari.threshold logical indicating if the ggplot2 object should be returned (default FALSE)
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @importFrom RSpectra eigs_sym
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("RunPCA", "iloreg", function(iloreg.object,number.of.pcs,scale){
+setMethod("RunPCA", "iloreg", function(iloreg.object,number.of.pcs,scale,ari.threshold){
 
   iloreg.object@number.of.pcs <- number.of.pcs
   iloreg.object@scale.pca <- scale
 
-  X <- do.call(cbind,iloreg.object@consensus.probability)
+  X <- do.call(cbind,iloreg.object@consensus.probability[unlist(lapply(iloreg_object@metrics,function(x) x["ARI",ncol(x)])) >= ari.threshold])
 
   X <- scale(X,scale = scale,center = TRUE)
 
