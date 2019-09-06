@@ -131,6 +131,7 @@ setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=
 #' @importFrom parallel stopCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach
+#' @importFrom foreach %dopar%
 #' @import Matrix
 #' @import tictoc
 #' @import aricode
