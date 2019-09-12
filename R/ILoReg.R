@@ -331,7 +331,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
     theme_bw() +
     ylab("CPA") +
     xlab("") +
-    geom_boxplot(width=0.2)+
+    # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
@@ -344,7 +344,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
     theme_bw() +
     ylab("Iterations") +
     xlab("") +
-    geom_boxplot(width=0.2)+
+    # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
@@ -357,7 +357,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
     theme_bw() +
     ylab("Average pairwise ARI") +
     xlab("") +
-    geom_boxplot(width=0.2)+
+    # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
