@@ -260,14 +260,14 @@ setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type
 
 
 
-setGeneric("VisualizeConsensusInformation", function(iloreg.object=NULL,return.plot=FALSE){
-  standardGeneric("VisualizeConsensusInformation")
+setGeneric("VisualizeQC", function(iloreg.object=NULL,return.plot=FALSE){
+  standardGeneric("VisualizeQC")
 })
 
 #' @title Iterative logistic regression (ILoReg) consensus clustering
 #'
-#' @rdname VisualizeConsensusInformation
-#' @name VisualizeConsensusInformation
+#' @rdname VisualizeQC
+#' @name VisualizeQC
 #'
 #' @description
 #' Plot histogram of the ARIs.
@@ -283,29 +283,83 @@ setGeneric("VisualizeConsensusInformation", function(iloreg.object=NULL,return.p
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @import ggplot2
 #' @import cowplot
+#' @importFrom aricode ARI
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("VisualizeConsensusInformation", "iloreg", function(iloreg.object,return.plot){
+setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
 
   final_aris <- unlist(lapply(iloreg.object@metrics,function(x) x["ARI",ncol(x)]))
 
-  df <- data.frame(matrix(final_aris,ncol = 1,dimnames = list(1:length(final_aris),c("ARI"))))
-
-  p1 <- ggplot(df, aes(x=ARI))+
-    geom_histogram(color="darkblue", fill="lightblue") +
-    xlim(0,1)
+  df <- data.frame(matrix(final_aris,ncol = 1,dimnames = list(1:length(final_aris),c("value"))))
+  df$Measure <- "CPA"
+  df1 <- df
 
   number_of_runs <- unlist(lapply(iloreg.object@metrics,function(x) ncol(x)))
 
-  df <- data.frame(matrix(number_of_runs,ncol = 1,dimnames = list(1:length(number_of_runs),c("Runs"))))
+  df <- data.frame(matrix(number_of_runs,ncol = 1,dimnames = list(1:length(number_of_runs),c("value"))))
+  df$Measure <- "Iterations"
+  df2 <- df
 
-  p2 <- ggplot(df, aes(x=Runs))+
-    geom_histogram(color="darkblue", fill="lightblue") +
-    xlab("Number of iterations")
+  cluster_list <- lapply(iloreg.object@consensus.probability,function(x) apply(x,1,which.max))
+  ARI_matrix <- matrix(NA,nrow = iloreg.object@L,ncol = iloreg.object@L)
+  for (i in 1:iloreg.object@L)
+  {
+    for (j in 1:iloreg.object@L)
+    {
+      if (i < j)
+      {
+        next
+      }
+      ari <- ARI(cluster_list[[i]],cluster_list[[j]])
+      ARI_matrix[i,j] <- ari
+      ARI_matrix[j,i] <- ari
 
-  p <- plot_grid(p1,p2,nrow=1)
+    }
+  }
 
+  pairwise_aris <- apply(ARI_matrix,1,mean)
+  df <- data.frame(matrix(pairwise_aris,ncol = 1,dimnames = list(1:length(pairwise_aris),c("value"))))
+  df$Measure <- "Average Pairwise ARI"
+  df3 <- df
+
+  # df <- rbind(df1,df2,df3)
+
+
+  p1 <- ggplot(df1, aes(x=Measure,y=value))+
+    geom_violin(trim=TRUE,fill="#F8766D") +
+    theme_bw() +
+    ylab("CPA") +
+    xlab("") +
+    geom_jitter(shape=16, position=position_jitter(0.2)) +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+
+
+  p2 <- ggplot(df2, aes(x=Measure,y=value))+
+    geom_violin(trim=TRUE,fill="#F8766D") +
+    theme_bw() +
+    ylab("Iterations") +
+    xlab("") +
+    geom_jitter(shape=16, position=position_jitter(0.2)) +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+
+
+
+  p3 <- ggplot(df3, aes(x=Measure,y=value))+
+    geom_violin(trim=TRUE,fill="#F8766D") +
+    theme_bw() +
+    ylab("Average pairwise ARI") +
+    xlab("") +
+    geom_jitter(shape=16, position=position_jitter(0.2)) +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
+
+  p <- plot_grid(p1,p2,p3,nrow=1)
 
   if (return.plot) {
     return(p)
