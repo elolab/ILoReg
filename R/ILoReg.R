@@ -329,7 +329,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
   p1 <- ggplot(df1, aes(x=Measure,y=value))+
     geom_violin(trim=TRUE,fill="#F8766D") +
     theme_bw() +
-    ylab("CPA") +
+    ylab("Clustering prediction accuracy (CPA)") +
     xlab("") +
     # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
@@ -355,7 +355,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
   p3 <- ggplot(df3, aes(x=Measure,y=value))+
     geom_violin(trim=TRUE,fill="#F8766D") +
     theme_bw() +
-    ylab("Average pairwise ARI") +
+    ylab("Average pairwise ARI (APA)") +
     xlab("") +
     # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
