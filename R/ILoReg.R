@@ -1664,3 +1664,94 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
 })
 
 
+
+
+
+
+setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
+                                           gene="",
+                                           return.plot=FALSE){
+  standardGeneric("GeneDropoutRatePlot")
+})
+
+#' @title Iterative logistic regression (ILoReg) consensus clustering
+#'
+#' @rdname GeneDropoutRatePlot
+#' @name GeneDropoutRatePlot
+#'
+#' @description
+#' Plot histogram of the ARIs.
+#'
+#' @details
+#' populates a Boolean matrix with the same dimension as nData.
+#' The value is \code{TRUE} for an entry if it
+#' is a dropout candidate; otherwise the value is \code{FALSE}.
+#'
+#' @param iloreg.object object of class 'iloreg'
+#' @param gene object of class 'iloreg'
+#' @param return.plot object of class 'iloreg'
+#' @return iloreg Object
+#' @keywords iterative logistic regression ILoReg consensus clustering
+#' @import ggplot2
+#' @importFrom cowplot plot_grid
+#' @importFrom reshape2 melt
+
+#' @export
+#' @examples
+#' a <- c(0,1,2)
+setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
+                                                      gene,
+                                                      return.plot)
+{
+
+
+
+  dropout_rates <- apply(iloreg.object@normalized.data,1,function(x) sum(x==0))/ncol(iloreg.object@normalized.data)
+
+  average_expression <- apply(iloreg.object@normalized.data,1,mean)
+  average_nonzero_expression <- apply(iloreg.object@normalized.data,1,function(x) mean(x[x!=0]))
+
+  df <- melt(dropout_rates)
+  df$average_expression <- average_expression
+  df$average_nonzero_expression <- average_nonzero_expression
+  df$logical <- rownames(df)==gene
+
+  p1 <- ggplot(data=df, aes(x=average_expression, y=value,color=logical)) +
+    geom_point()+
+    theme_bw()+
+    scale_colour_discrete(name=gene,labels=c("FALSE","TRUE")) +
+    ylab("Dropout rate")+
+    xlab("Average expression") +
+    annotate("segment", x = df[gene,"average_expression"], xend = df[gene,"average_expression"]+1, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
+    annotate("text", x = df[gene,"average_expression"]+1.5, y = df[gene,"value"], label = gene) +
+    theme(legend.position = "none")
+
+  p2 <- ggplot(data=df, aes(x=average_nonzero_expression, y=value,color=logical)) +
+    geom_point()+
+    theme_bw()+
+    scale_colour_discrete(name=gene,labels=c("FALSE","TRUE")) +
+    ylab("Dropout rate")+
+    xlab("Average non-zero expression") +
+    annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+1, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
+    annotate("text", x = df[gene,"average_nonzero_expression"]+1.5, y = df[gene,"value"], label = gene) +
+    theme(legend.position = "none")
+
+  p <- plot_grid(p1,p2,align = "hv")
+
+
+
+
+  if (return.plot)
+  {
+    return(p)
+  } else {
+    print(p)
+  }
+
+
+
+
+})
+
+
+
