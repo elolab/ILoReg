@@ -1693,7 +1693,6 @@ setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @import ggplot2
-#' @importFrom cowplot plot_grid
 #' @importFrom reshape2 melt
 
 #' @export
@@ -1708,7 +1707,6 @@ setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
 
   dropout_rates <- apply(iloreg.object@normalized.data,1,function(x) sum(x==0))/ncol(iloreg.object@normalized.data)
 
-  average_expression <- apply(iloreg.object@normalized.data,1,mean)
   average_nonzero_expression <- apply(iloreg.object@normalized.data,1,function(x) mean(x[x!=0]))
 
   df <- melt(dropout_rates)
@@ -1716,17 +1714,8 @@ setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
   df$average_nonzero_expression <- average_nonzero_expression
   df$logical <- rownames(df)==gene
 
-  p1 <- ggplot(data=df, aes(x=average_expression, y=value,color=logical)) +
-    geom_point()+
-    theme_bw()+
-    scale_colour_discrete(name=gene,labels=c("FALSE","TRUE")) +
-    ylab("Dropout rate")+
-    xlab("Average expression") +
-    annotate("segment", x = df[gene,"average_expression"], xend = df[gene,"average_expression"]+1, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
-    annotate("text", x = df[gene,"average_expression"]+1.5, y = df[gene,"value"], label = gene) +
-    theme(legend.position = "none")
 
-  p2 <- ggplot(data=df, aes(x=average_nonzero_expression, y=value,color=logical)) +
+  p <- ggplot(data=df, aes(x=average_nonzero_expression, y=value,color=logical)) +
     geom_point()+
     theme_bw()+
     scale_colour_discrete(name=gene,labels=c("FALSE","TRUE")) +
@@ -1736,7 +1725,6 @@ setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
     annotate("text", x = df[gene,"average_nonzero_expression"]+1.5, y = df[gene,"value"], label = gene) +
     theme(legend.position = "none")
 
-  p <- plot_grid(p1,p2,align = "hv")
 
 
 
