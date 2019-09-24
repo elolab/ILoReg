@@ -1669,7 +1669,7 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
 
 
 setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
-                                           gene="",
+                                           genes="",
                                            return.plot=FALSE){
   standardGeneric("GeneDropoutRatePlot")
 })
@@ -1688,7 +1688,7 @@ setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
 #' is a dropout candidate; otherwise the value is \code{FALSE}.
 #'
 #' @param iloreg.object object of class 'iloreg'
-#' @param gene object of class 'iloreg'
+#' @param genes object of class 'iloreg'
 #' @param return.plot object of class 'iloreg'
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
@@ -1699,7 +1699,7 @@ setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
 #' @examples
 #' a <- c(0,1,2)
 setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
-                                                      gene,
+                                                      genes,
                                                       return.plot)
 {
 
@@ -1710,20 +1710,48 @@ setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
   average_nonzero_expression <- apply(iloreg.object@normalized.data,1,function(x) mean(x[x!=0]))
 
   df <- melt(dropout_rates)
-  df$average_expression <- average_expression
   df$average_nonzero_expression <- average_nonzero_expression
-  df$logical <- rownames(df)==gene
+  df$logical <- rownames(df) %in% genes
 
 
   p <- ggplot(data=df, aes(x=average_nonzero_expression, y=value,color=logical)) +
     geom_point()+
     theme_bw()+
-    scale_colour_discrete(name=gene,labels=c("FALSE","TRUE")) +
+    scale_colour_discrete(name="gene",labels=c("FALSE","TRUE")) +
     ylab("Dropout rate")+
-    xlab("Average non-zero expression") +
-    annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+1, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
-    annotate("text", x = df[gene,"average_nonzero_expression"]+1.5, y = df[gene,"value"], label = gene) +
+    xlab("Average non-zero expression")+
     theme(legend.position = "none")
+
+  genes <- genes[order(df[genes,"value"])]
+
+  dropout_previous_gene <- NA
+  for (gene in genes)
+  {
+    text_annotate_x_space <- 0.25
+    if (nchar(gene) > 7)
+    {
+      text_annotate_x_space <- 0.5
+    }
+    seg_length <- runif(1,0.1,2)
+    if (is.na(dropout_previous_gene))
+    {
+      p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
+        annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"], label = gene)
+    } else {
+      if ((dropout_previous_gene - df[gene,"value"]) < 0.05)
+      {
+        random_y_space <- runif(1,-0.25,0.25)
+        p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"]+random_y_space, colour = "black") +
+          annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"]+random_y_space, label = gene)
+
+      } else {
+        p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
+          annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"], label = gene)
+      }
+    }
+    dropout_previous_gene <- df[gene,"value"]
+  }
+
 
 
 

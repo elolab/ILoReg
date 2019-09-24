@@ -5,13 +5,13 @@
 \alias{GeneDropoutRatePlot}
 \title{Iterative logistic regression (ILoReg) consensus clustering}
 \usage{
-\S4method{GeneDropoutRatePlot}{iloreg}(iloreg.object = NULL, gene = "",
-  return.plot = FALSE)
+\S4method{GeneDropoutRatePlot}{iloreg}(iloreg.object = NULL,
+  genes = "", return.plot = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{gene}{object of class 'iloreg'}
+\item{genes}{object of class 'iloreg'}
 
 \item{return.plot}{object of class 'iloreg'}
 }
