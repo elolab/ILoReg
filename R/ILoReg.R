@@ -1363,8 +1363,16 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
 
     genes_to_include <- rownames(data_cluster)[genes.pct_cluster>=min.pct | genes.pct_other >= min.pct]
 
-    data_cluster <- data_cluster[genes_to_include,]
-    data_other <- data_other[genes_to_include,]
+
+    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+    data_other <- data_other[genes_to_include,,drop=FALSE]
+
+    cat(paste0(nrow(data_cluster)," genes left after min.pct filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
+    }
 
     # min.diff.pct filter
     if (!is.null(min.diff.pct))
@@ -1374,8 +1382,15 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
 
       genes_to_include <- rownames(data_cluster)[abs(genes.pct_cluster-genes.pct_other) >= min.diff.pct]
 
-      data_cluster <- data_cluster[genes_to_include,]
-      data_other <- data_other[genes_to_include,]
+      data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+      data_other <- data_other[genes_to_include,,drop=FALSE]
+    }
+
+    cat(paste0(nrow(data_cluster)," genes left after min.diff.pct filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
     }
 
     # logfc.threshold filter
@@ -1385,10 +1400,17 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
 
     log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
 
-    genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold]
+    genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold | log2FC <= -logfc.threshold]
 
-    data_cluster <- data_cluster[genes_to_include,]
-    data_other <- data_other[genes_to_include,]
+    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+    data_other <- data_other[genes_to_include,,drop=FALSE]
+
+    cat(paste0(nrow(data_cluster)," genes left after logfc.threshold filtering\n"))
+    if (nrow(data_cluster)==0)
+    {
+      cat("-----------------------------------\n")
+      next
+    }
 
     # Run DE test
 
@@ -1399,7 +1421,7 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
       names(p_values) <- rownames(data_cluster)
 
       # Adjust p-values
-      adj_p_values <- p.adjust(p_values, method = "BH", n = length(p_values))
+      adj_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_values))
 
       res <- cbind(p_values,adj_p_values,log2FC[names(p_values)],genes.pct_cluster[names(p_values)],genes.pct_other[names(p_values)],abs(genes.pct_cluster-genes.pct_other)[names(p_values)])
       colnames(res) <- c("p.value","adj.p.value","log2FC","pct.1","pct.2","diff.pct")
