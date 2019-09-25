@@ -1343,100 +1343,105 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   # Compare cells from each cluster against all other clusters
   results_list <- list()
 
-  for (cluster in clusters)
+  # for (cluster in clusters)
+  # {
+
+  cluster <- "group.1"
+
+  cat(paste0("testing cluster ",cluster,"\n"))
+  # Extract data
+
+  data_cluster <- data[,clustering==cluster]
+  data_other <- data[,clustering!=cluster]
+
+  # Skip if the number of cells in the test or the reference set is lower than min.cells.group
+  if (ncol(data_cluster) < min.cells.cluster | ncol(data_other) < min.cells.cluster)
   {
-    cat(paste0("testing cluster ",cluster,"\n"))
-    # Extract data
-
-    data_cluster <- data[,clustering==cluster]
-    data_other <- data[,clustering!=cluster]
-
-    # Skip if the number of cells in the test or the reference set is lower than min.cells.group
-    if (ncol(data_cluster) < min.cells.cluster | ncol(data_other) < min.cells.cluster)
-    {
-      next
-    }
-
-    # min.pct filter
-    genes.pct_cluster <- apply(data_cluster,1,function(x) sum(x!=0))/ncol(data_cluster)
-    genes.pct_other <- apply(data_other,1,function(x) sum(x!=0))/ncol(data_other)
-
-    genes_to_include <- rownames(data_cluster)[genes.pct_cluster>=min.pct | genes.pct_other >= min.pct]
-
-
-    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
-    data_other <- data_other[genes_to_include,,drop=FALSE]
-
-    cat(paste0(nrow(data_cluster)," genes left after min.pct filtering\n"))
-    if (nrow(data_cluster)==0)
-    {
-      cat("-----------------------------------\n")
-      next
-    }
-
-    # min.diff.pct filter
-    if (!is.null(min.diff.pct))
-    {
-      genes.pct_cluster <- genes.pct_cluster[genes_to_include]
-      genes.pct_other <- genes.pct_other[genes_to_include]
-
-      genes_to_include <- rownames(data_cluster)[abs(genes.pct_cluster-genes.pct_other) >= min.diff.pct]
-
-      data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
-      data_other <- data_other[genes_to_include,,drop=FALSE]
-    }
-
-    cat(paste0(nrow(data_cluster)," genes left after min.diff.pct filtering\n"))
-    if (nrow(data_cluster)==0)
-    {
-      cat("-----------------------------------\n")
-      next
-    }
-
-    # logfc.threshold filter
-    # Calculate log2 fold changes
-    cluster_aves <- apply(data_cluster,1,mean)
-    other_aves <- apply(data_other,1,mean)
-
-    log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
-
-    genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold | log2FC <= -logfc.threshold]
-
-    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
-    data_other <- data_other[genes_to_include,,drop=FALSE]
-
-    cat(paste0(nrow(data_cluster)," genes left after logfc.threshold filtering\n"))
-    if (nrow(data_cluster)==0)
-    {
-      cat("-----------------------------------\n")
-      next
-    }
-
-    # Run DE test
-
-    if (test=="wilcox")
-    {
-      wilcox.res <- lapply(rownames(data_cluster),function(x) wilcox.test(x=data_cluster[x,],y=data_other[x,]))
-      p_values <- unlist(lapply(wilcox.res,function(x) x$p.value))
-      names(p_values) <- rownames(data_cluster)
-
-      # Adjust p-values
-      adj_p_values <- p.adjust(p_values, method = "bonferroni", n = length(p_values))
-
-      res <- cbind(p_values,adj_p_values,log2FC[names(p_values)],genes.pct_cluster[names(p_values)],genes.pct_other[names(p_values)],abs(genes.pct_cluster-genes.pct_other)[names(p_values)])
-      colnames(res) <- c("p.value","adj.p.value","log2FC","pct.1","pct.2","diff.pct")
-      res <- as.data.frame(res)
-      res$cluster <- cluster
-      res$gene <- names(p_values)
-    }
-
-    results_list[[cluster]] <- res
-
-
+    next
   }
+
+  # min.pct filter
+  genes.pct_cluster <- apply(data_cluster,1,function(x) sum(x!=0))/ncol(data_cluster)
+  genes.pct_other <- apply(data_other,1,function(x) sum(x!=0))/ncol(data_other)
+
+  genes_to_include <- rownames(data_cluster)[genes.pct_cluster>=min.pct | genes.pct_other >= min.pct]
+
+
+  data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+  data_other <- data_other[genes_to_include,,drop=FALSE]
+
+  cat(paste0(nrow(data_cluster)," genes left after min.pct filtering\n"))
+  if (nrow(data_cluster)==0)
+  {
+    cat("-----------------------------------\n")
+    next
+  }
+
+  # min.diff.pct filter
+  if (!is.null(min.diff.pct))
+  {
+    genes.pct_cluster <- genes.pct_cluster[genes_to_include]
+    genes.pct_other <- genes.pct_other[genes_to_include]
+
+    genes_to_include <- rownames(data_cluster)[abs(genes.pct_cluster-genes.pct_other) >= min.diff.pct]
+
+    data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+    data_other <- data_other[genes_to_include,,drop=FALSE]
+  }
+
+  cat(paste0(nrow(data_cluster)," genes left after min.diff.pct filtering\n"))
+  if (nrow(data_cluster)==0)
+  {
+    cat("-----------------------------------\n")
+    next
+  }
+
+  # logfc.threshold filter
+  # Calculate log2 fold changes
+  cluster_aves <- apply(data_cluster,1,mean)
+  other_aves <- apply(data_other,1,mean)
+
+  log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
+
+  genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold | log2FC <= -logfc.threshold]
+
+  data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
+  data_other <- data_other[genes_to_include,,drop=FALSE]
+
+  cat(paste0(nrow(data_cluster)," genes left after logfc.threshold filtering\n"))
+  if (nrow(data_cluster)==0)
+  {
+    cat("-----------------------------------\n")
+    next
+  }
+
+  # Run DE test
+
+  if (test=="wilcox")
+  {
+    wilcox.res <- lapply(rownames(data_cluster),function(x) wilcox.test(x=data_cluster[x,],y=data_other[x,]))
+    p_values <- unlist(lapply(wilcox.res,function(x) x$p.value))
+    names(p_values) <- rownames(data_cluster)
+
+    # Adjust p-values
+    adj_p_values <- p.adjust(p_values, method = "bonferroni", n = nrow(iloreg.object@normalized.data))
+
+    res <- cbind(p_values,adj_p_values,log2FC[names(p_values)],genes.pct_cluster[names(p_values)],genes.pct_other[names(p_values)],abs(genes.pct_cluster-genes.pct_other)[names(p_values)])
+    colnames(res) <- c("p.value","adj.p.value","log2FC","pct.1","pct.2","diff.pct")
+    res <- as.data.frame(res)
+    res$cluster <- cluster
+    res$gene <- names(p_values)
+  }
+
+  results_list[[cluster]] <- res
+
+
+  # }
 
   results_df <- do.call(rbind,results_list)
   rownames(results_df) <- make.unique(unlist(lapply(results_list,rownames)))
+
+  results_df$cluster <- NULL
 
   if(only.pos) {
     results_df <- results_df[results_df$adj.p.value <= return.thresh,]
