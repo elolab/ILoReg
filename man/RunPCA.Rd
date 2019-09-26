@@ -6,7 +6,7 @@
 \title{Iterative logistic regression (ILoReg) consensus clustering}
 \usage{
 \S4method{RunPCA}{iloreg}(iloreg.object = NULL, number.of.pcs = 50,
-  scale = FALSE, ari.threshold = 0)
+  scale = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -14,8 +14,6 @@
 \item{number.of.pcs}{logical indicating if the ggplot2 object should be returned (default FALSE)}
 
 \item{scale}{logical indicating if the ggplot2 object should be returned (default FALSE)}
-
-\item{ari.threshold}{logical indicating if the ggplot2 object should be returned (default FALSE)}
 }
 \value{
 ggplot2 object if return.plot=TRUE

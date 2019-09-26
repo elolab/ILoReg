@@ -375,7 +375,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
 
 
 
-setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE,ari.threshold=0){
+setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE){
   standardGeneric("RunPCA")
 })
 
@@ -395,19 +395,18 @@ setGeneric("RunPCA", function(iloreg.object=NULL,number.of.pcs=50,scale=FALSE,ar
 #' @param iloreg.object object of class 'iloreg'
 #' @param number.of.pcs logical indicating if the ggplot2 object should be returned (default FALSE)
 #' @param scale logical indicating if the ggplot2 object should be returned (default FALSE)
-#' @param ari.threshold logical indicating if the ggplot2 object should be returned (default FALSE)
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @importFrom RSpectra eigs_sym
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("RunPCA", "iloreg", function(iloreg.object,number.of.pcs,scale,ari.threshold){
+setMethod("RunPCA", "iloreg", function(iloreg.object,number.of.pcs,scale){
 
   iloreg.object@number.of.pcs <- number.of.pcs
   iloreg.object@scale.pca <- scale
 
-  X <- do.call(cbind,iloreg.object@consensus.probability[unlist(lapply(iloreg_object@metrics,function(x) x["ARI",ncol(x)])) >= ari.threshold])
+  X <- do.call(cbind,iloreg.object@consensus.probability)
 
   X <- scale(X,scale = scale,center = TRUE)
 
@@ -752,7 +751,7 @@ setMethod("ManualClustering", "iloreg", function(iloreg.object,K){
 })
 
 
-setGeneric("MergeClusters", function(iloreg.object=NULL,clusters.to.merge=""){
+setGeneric("MergeClusters", function(iloreg.object=NULL,clusters.to.merge="",new.name=""){
   standardGeneric("MergeClusters")
 })
 
@@ -771,13 +770,14 @@ setGeneric("MergeClusters", function(iloreg.object=NULL,clusters.to.merge=""){
 #'
 #' @param iloreg.object object of class 'iloreg'
 #' @param clusters.to.merge object of class 'iloreg'
+#' @param new.name object of class 'iloreg'
 #' @return iloreg Object
 #' @keywords iterative logistic regression ILoReg consensus clustering
 
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("MergeClusters", "iloreg", function(iloreg.object,clusters.to.merge){
+setMethod("MergeClusters", "iloreg", function(iloreg.object,clusters.to.merge,new.name){
 
   clusters.to.merge <- as.character(clusters.to.merge)
 
@@ -789,7 +789,12 @@ setMethod("MergeClusters", "iloreg", function(iloreg.object,clusters.to.merge){
     stop("invalid clusters.to.merge argument")
   }
 
-  new_cluster_name <- paste(clusters.to.merge,collapse = ",")
+  if (new.name=="")
+  {
+    new_cluster_name <- paste(clusters.to.merge,collapse = ",")
+  } else {
+    new_cluster_name <- new.name
+  }
 
   clustering_new <- as.character(clustering_old)
   clustering_new[clustering_new %in% clusters.to.merge] <- new_cluster_name
@@ -918,7 +923,7 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
     p<-ggplot(df, aes(x=dim1, y=dim2)) +
       geom_point(size=point.size,aes(color=group)) +
       scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
-                             high = muted("blue"),name = genes) +
+                             high = "blue",name = genes) +
       xlab(xlab) +
       ylab(ylab) +
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -989,7 +994,8 @@ setMethod("ClusterScatterPlot", "iloreg", function(iloreg.object,clustering.type
   {
     color.by <- iloreg.object@clustering.optimal
   } else {
-    stop("clustering.type must be 'optimal' or 'manual'")
+    clustering <- iloreg.object@clustering.manual
+    cat("clustering.type='manual'")
   }
 
   df <- as.data.frame(two.dim.data)
@@ -1088,7 +1094,8 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
   {
     clustering <- iloreg.object@clustering.optimal
   } else {
-    stop("clustering.type must be 'optimal' or 'manual'")
+    clustering <- iloreg.object@clustering.manual
+    cat("clustering.type='manual'")
   }
 
   data <- iloreg.object@normalized.data
@@ -1297,7 +1304,8 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   {
     clustering <- iloreg.object@clustering.optimal
   } else {
-    stop("clustering.type must be 'optimal' or 'manual'")
+    clustering <- iloreg.object@clustering.manual
+    cat("clustering.type='manual'")
   }
 
   data <- iloreg.object@normalized.data
@@ -1503,19 +1511,20 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
   {
     clustering <- iloreg.object@clustering.optimal
   } else {
-    stop("clustering.type must be 'optimal' or 'manual'")
+    clustering <- iloreg.object@clustering.manual
+    cat("clustering.type='manual'")
   }
 
   data <- iloreg.object@normalized.data
 
   df <- as.numeric(t(data[genes,]))
-  df <- data.frame(matrix(df,ncol = 1,dimnames = list(1:length(df),"expression")))
+  df <- data.frame(matrix(df,ncol = 1,dimnames = list(1:length(df),"Expression")))
   df$gene  <- unlist(lapply(genes,function(x) rep(x,ncol(data))))
   df$gene <- factor(df$gene)
-  df$cluster <- rep(as.character(clustering),length(genes))
-  df$cluster <- factor(df$cluster)
+  df$Cluster <- rep(as.character(clustering),length(genes))
+  df$Cluster <- factor(df$Cluster)
 
-  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=cluster, y=expression, fill=cluster))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x))
+  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=Cluster, y=Expression, fill=Cluster))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5)))
 
   p <- plot_grid(plotlist = plotlist)
   print(p)
@@ -1575,7 +1584,8 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
   {
     clustering <- iloreg.object@clustering.optimal
   } else {
-    stop("clustering.type must be 'optimal' or 'manual'")
+    clustering <- iloreg.object@clustering.manual
+    cat("clustering.type='manual'")
   }
 
   data <- iloreg.object@normalized.data

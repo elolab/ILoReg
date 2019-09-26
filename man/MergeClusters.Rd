@@ -6,12 +6,14 @@
 \title{Iterative logistic regression (ILoReg) consensus clustering}
 \usage{
 \S4method{MergeClusters}{iloreg}(iloreg.object = NULL,
-  clusters.to.merge = "")
+  clusters.to.merge = "", new.name = "")
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
 \item{clusters.to.merge}{object of class 'iloreg'}
+
+\item{new.name}{object of class 'iloreg'}
 }
 \value{
 iloreg Object
