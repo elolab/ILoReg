@@ -811,14 +811,14 @@ setMethod("MergeClusters", "iloreg", function(iloreg.object,clusters.to.merge,ne
 
 
 
-setGeneric("RenameClusters", function(iloreg.object=NULL,new.cluster.names=""){
-  standardGeneric("RenameClusters")
+setGeneric("RenameAllClusters", function(iloreg.object=NULL,new.cluster.names=""){
+  standardGeneric("RenameAllClusters")
 })
 
 #' @title Iterative logistic regression (ILoReg) consensus clustering
 #'
-#' @rdname RenameClusters
-#' @name RenameClusters
+#' @rdname RenameAllClusters
+#' @name RenameAllClusters
 #'
 #' @description
 #' Plot histogram of the ARIs.
@@ -837,7 +837,7 @@ setGeneric("RenameClusters", function(iloreg.object=NULL,new.cluster.names=""){
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("RenameClusters", "iloreg", function(iloreg.object,new.cluster.names){
+setMethod("RenameAllClusters", "iloreg", function(iloreg.object,new.cluster.names){
 
   new.cluster.names <- as.character(new.cluster.names)
 
@@ -858,6 +858,66 @@ setMethod("RenameClusters", "iloreg", function(iloreg.object,new.cluster.names){
 
 })
 
+
+
+
+setGeneric("RenameCluster", function(iloreg.object=NULL,old.cluster.name="",new.cluster.name=""){
+  standardGeneric("RenameCluster")
+})
+
+#' @title Iterative logistic regression (ILoReg) consensus clustering
+#'
+#' @rdname RenameCluster
+#' @name RenameCluster
+#'
+#' @description
+#' Plot histogram of the ARIs.
+#'
+#' @details
+#' populates a Boolean matrix with the same dimension as nData.
+#' The value is \code{TRUE} for an entry if it
+#' is a dropout candidate; otherwise the value is \code{FALSE}.
+#'
+#' @param iloreg.object object of class 'iloreg'
+#' @param old.cluster.name object of class 'iloreg'
+#' @param new.cluster.name object of class 'iloreg'
+#' @return iloreg Object
+#' @keywords iterative logistic regression ILoReg consensus clustering
+
+#' @export
+#' @examples
+#' a <- c(0,1,2)
+setMethod("RenameCluster", "iloreg", function(iloreg.object,old.cluster.name,new.cluster.name){
+
+
+  old.cluster.name <- as.character(old.cluster.name)
+  new.cluster.name <- as.character(new.cluster.name)
+
+  if (old.cluster.name=="" | new.cluster.name=="")
+  {
+    stop("'old.cluster.name' or 'new.cluster.name' empty\n")
+  }
+
+  clustering_old <- iloreg.object@clustering.manual
+  clusters_old <- levels(clustering_old)
+  clustering_old <- as.character(clustering_old)
+
+  if (!(old.cluster.name %in% clusters_old))
+  {
+    stop("'old.cluster.name' unvalid cluster name\n")
+  }
+
+  clustering_new <- clustering_old
+  clustering_new[clustering_new==old.cluster.name] <- new.cluster.name
+
+  clustering_new <- factor(clustering_new)
+  names(clustering_new) <- names(clustering_old)
+
+  iloreg.object@clustering.manual <- clustering_new
+
+  return(iloreg.object)
+
+})
 
 
 
