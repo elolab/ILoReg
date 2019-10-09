@@ -99,7 +99,7 @@ CreateILoRegObject <- function(normalized.data)
   return(iloreg_object)
 }
 
-setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=5,C=0.5,type="L1",max.number.of.iterations=200,threads=0){
+setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=5,C=0.5,type="L1",max.number.of.iterations=200,threads=0,seed=1){
   standardGeneric("RunILoRegConsensus")
 })
 
@@ -124,6 +124,7 @@ setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=
 #' @param type "L1" for LASSO and "L2" for Ridge.  (default "L1")
 #' @param threads A positive integer that specifies how many logical processors (threads) should be used. Use threads=1 to disable parallelism and threads=0 to use all available core minus one. (default 0)
 #' @param max.number.of.iterations A positive integer that denotes the maximum number of iterations performed until the algorithm ends. (default 200)
+#' @param seed A positive integer that denotes the maximum number of iterations performed until the algorithm ends. (default 200)
 #' @return iloreg object
 #' @keywords iterative logistic regression ILoReg consensus clustering
 #' @importFrom parallel makeCluster
@@ -140,7 +141,7 @@ setGeneric("RunILoRegConsensus", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=
 #' @export
 #' @examples
 #' a <- c(0,1,2)
-setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type,max.number.of.iterations,threads){
+setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type,max.number.of.iterations,threads,seed){
 
   if (class(iloreg.object) != "iloreg") {
     stop("iloreg.object must of of class 'iloreg'")
@@ -202,7 +203,7 @@ setMethod("RunILoRegConsensus", "iloreg", function(iloreg.object, k,d,L,r,C,type
     iloreg.object@threads <- threads
   }
 
-
+  set.seed(seed)
 
   parallelism <- TRUE
 
@@ -1746,7 +1747,8 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
     xlab(xlab) +
     ylab(ylab) +
     theme_classic() +
-    annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(annotation))
+    annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(annotation)) +
+    guides(colour = guide_legend(override.aes = list(size=2)))
 
   if (return.plot)
   {
