@@ -20,7 +20,7 @@
 #' a <- c(0,1,2)
 
 
-RunSingleILoRegClustering <- function(normalized.data = NULL,k=15,d=0.3,r=5,C=5,type="L1",max.number.of.iterations=100)
+RunICP <- function(normalized.data = NULL,k=15,d=0.3,r=5,C=5,type="L1",max.number.of.iterations=100)
 {
 
   first_round = TRUE

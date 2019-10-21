@@ -223,11 +223,11 @@ setMethod("RunParallelICP", "iloreg", function(iloreg.object, k,d,L,r,C,type,max
                           .combine = list,
                           .maxcombine = 1000,
                           .inorder = FALSE,
-                          .export = c('RunSingleILoRegClustering','LogisticRegression'),
+                          .export = c('RunICP','LogisticRegression'),
                           .packages=c("tictoc","Matrix","aricode","LiblineaR","SparseM"),
                           .multicombine = TRUE)  %dopar% {
                             set.seed(seeds[task])
-                            RunSingleILoRegClustering(normalized.data = iloreg.object@normalized.data,
+                            RunICP(normalized.data = iloreg.object@normalized.data,
                                                       k = iloreg.object@k,
                                                       d = iloreg.object@d,
                                                       r = iloreg.object@r,
@@ -240,7 +240,7 @@ setMethod("RunParallelICP", "iloreg", function(iloreg.object, k,d,L,r,C,type,max
   } else {
     iloreg_out <- list()
     for (l in 1:L) {
-      res <- RunSingleILoRegClustering(normalized.data = iloreg.object@normalized.data,
+      res <- RunICP(normalized.data = iloreg.object@normalized.data,
                                        k = iloreg.object@k,
                                        d = iloreg.object@d,
                                        r = iloreg.object@r,
