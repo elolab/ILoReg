@@ -2,7 +2,7 @@
 
 export(CreateILoRegObject)
 export(LogisticRegression)
-export(RunSingleILoRegClustering)
+export(RunICP)
 exportClasses(iloreg)
 exportMethods(AnnotationScatterPlot)
 exportMethods(CalculateSilhouetteInformation)
