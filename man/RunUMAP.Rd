@@ -3,7 +3,7 @@
 \docType{methods}
 \name{RunUMAP}
 \alias{RunUMAP}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Uniform Manifold Approximation and Projection (UMAP)}
 \usage{
 \S4method{RunUMAP}{iloreg}(iloreg.object = NULL)
 }
@@ -11,22 +11,26 @@
 \item{iloreg.object}{object of class 'iloreg'}
 }
 \value{
-ggplot2 object if return.plot=TRUE
+iloreg object
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+Run nonlinear dimensionality reduction using UMAP with the PCA-transformed consensus matrix as input.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- RunUMAP(iloreg_object)
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{Approximation}
+\keyword{Manifold}
+\keyword{Projection}
+\keyword{UMAP}
+\keyword{Uniform}
+\keyword{and}

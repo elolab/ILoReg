@@ -3,56 +3,78 @@
 \docType{methods}
 \name{FindAllGeneMarkers}
 \alias{FindAllGeneMarkers}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{identification of gene markers for all clusters}
 \usage{
 \S4method{FindAllGeneMarkers}{iloreg}(iloreg.object = NULL,
   clustering.type = "", test = "wilcox", logfc.threshold = 0.25,
-  min.pct = 0.1, min.diff.pct = NULL, min.cells.cluster = 3,
+  min.pct = 0.1, min.diff.pct = NULL, min.cells.group = 3,
   max.cells.per.cluster = NULL, random.seed = 1, pseudocount.use = 1,
   return.thresh = 0.01, only.pos = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{clustering.type}{object of class 'iloreg'}
+\item{clustering.type}{"manual" or "optimal". "manual" refers to the clustering formed using the "SelectKClusters" function and "optimal" to the clustering formed using the "CalculateSilhouetteInformation" function. (default "manual")}
 
-\item{test}{object of class 'iloreg'}
+\item{test}{Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test, AKA Mann-Whitney U test) is supported at the moment.}
 
-\item{logfc.threshold}{object of class 'iloreg'}
+\item{logfc.threshold}{Filters out genes that have log2 fold-change of the averaged gene expression values (with the pseudo-count value added to the averaged values before division if pseudocount.use > 0) below this threshold. (default 0.25)}
 
-\item{min.pct}{object of class 'iloreg'}
+\item{min.pct}{Filters out genes that have dropout rate (fraction of cells expressing a gene) below this threshold in both comparison groups (default 0.1).}
 
-\item{min.diff.pct}{object of class 'iloreg'}
+\item{min.diff.pct}{Filters out genes that do not have this minimum difference in the dropout rates (fraction of cells expressing a gene) between the two comparison groups  (default NULL).}
 
-\item{min.cells.cluster}{object of class 'iloreg'}
+\item{min.cells.group}{The minimum number of cells in the two comparison groups to perform the DE analysis. If the number of cells is below the threshold (default 3), then the DE analysis of this cluster is skipped.}
 
-\item{max.cells.per.cluster}{object of class 'iloreg'}
+\item{max.cells.per.cluster}{The maximun number of cells per cluster if downsampling is performed to speed up the DE analysis. (default NULL, i.e. no downsampling).}
 
-\item{random.seed}{object of class 'iloreg'}
+\item{random.seed}{random seed for for downsampling if max.cells.per.cluster is not NULL (default 1)}
 
-\item{pseudocount.use}{object of class 'iloreg'}
+\item{pseudocount.use}{A positive integer (default 1), which is added to the average gene expression values before calculating the fold-change. This makes sure that no divisions by zero occur.}
 
-\item{return.thresh}{object of class 'iloreg'}
+\item{return.thresh}{If only.pos=TRUE, then return only genes that have the adjusted p-value (adjusted by the Bonferroni method) below or equal to this threshold (default 0.01).}
 
-\item{only.pos}{object of class 'iloreg'}
+\item{only.pos}{Whether to return only genes that have an adjusted p-value (adjusted by the Bonferroni method) below or equal to the threshold (default FALSE).}
 }
 \value{
-iloreg Object
+a data frame of the results if positive results were found, else NULL
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+FindAllGeneMarkers enables identifying gene markers for all clusters at once. This is done by differential expresission analysis
+where cells from one cluster are compared against the cells from the rest of the clusters. Gene and cell filters can be applied to accelerate
+the analysis, but this might lead to missing weak signals.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- RunTSNE(iloreg_object,perplexity=30)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- SelectKClusters(iloreg_object,K=15)
+gene_markers <- FindAllGeneMarkers(iloreg_object,
+                                  clustering.type = "manual",
+                                  test = "wilcox",
+                                  logfc.threshold = 0.25,
+                                  min.pct = 0.1,
+                                 min.diff.pct = NULL,
+                                 pseudocount.use = 1,
+                                 min.cells.cluster = 3,
+                                return.thresh = 0.01,
+                                only.pos = FALSE,max.cells.per.cluster = NULL)
+library(dplyr)
+## Select top 10 genes per cluster by log2 fold-change
+gene_markers \%>\% group_by(cluster) \%>\% top_n(10, log2FC) -> top10
+gene_markers \%>\% group_by(cluster) \%>\% top_n(1, log2FC) -> top1
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{DE}
+\keyword{analysis}
+\keyword{differential}
+\keyword{expression}
+\keyword{gene}
+\keyword{markers}

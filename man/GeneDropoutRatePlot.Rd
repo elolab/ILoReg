@@ -3,35 +3,50 @@
 \docType{methods}
 \name{GeneDropoutRatePlot}
 \alias{GeneDropoutRatePlot}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Dropout rate versus average non-zero expression}
 \usage{
 \S4method{GeneDropoutRatePlot}{iloreg}(iloreg.object = NULL,
-  genes = "", return.plot = FALSE)
+  genes = "", return.plot = FALSE, use.clusters = NULL,
+  clustering.type = "manual")
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{genes}{object of class 'iloreg'}
+\item{genes}{a character vector of the genes to visualize over the dropout rate curve}
 
-\item{return.plot}{object of class 'iloreg'}
+\item{return.plot}{return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})}
+
+\item{use.clusters}{use data from these clusters only}
+
+\item{clustering.type}{"manual" or "optimal". "manual" refers to the clustering formed using the "SelectKClusters" function and "optimal" to the clustering using the "CalculateSilhouetteInformation" function. (default "manual")}
 }
 \value{
-iloreg Object
+ggplot2 object if return.plot=TRUE
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+The GeneDropoutRatePlot function enables visualizion of dropout rates (fraction of cells expressing a gene) against
+the average non-zero expression values. This function can aid the user to determinine if a gene is differentially expressed or not,
+since differentially expressed genes are likely to be above the expected curve. Cells can be filtered based on clustering before
+calculating the values.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- SelectKClusters(iloreg_object,K=15)
+GeneDropoutRatePlot(iloreg_object,genes = c("CD79A","TCL1A","IGLL5","VPREB3"),use.clusters = c(24,15,14,2),clustering.type = "manual")
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{average}
+\keyword{curve}
+\keyword{dropout}
+\keyword{expression}
+\keyword{gene}
+\keyword{non-zero}
+\keyword{rate}

@@ -3,7 +3,7 @@
 \docType{methods}
 \name{MergeClusters}
 \alias{MergeClusters}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Merge clusters}
 \usage{
 \S4method{MergeClusters}{iloreg}(iloreg.object = NULL,
   clusters.to.merge = "", new.name = "")
@@ -11,23 +11,29 @@
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{clusters.to.merge}{object of class 'iloreg'}
+\item{clusters.to.merge}{a character or numeric vector for the names of the clusters to merge}
 
-\item{new.name}{object of class 'iloreg'}
+\item{new.name}{a character for the new name of the merged cluster. If empty, the new cluster name is formed by separating the cluster names by "_".}
 }
 \value{
 iloreg Object
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+MergeClusters function enables merging clusters into one.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- SelectKClusters(iloreg_object,K=25)
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(23,6),"NewCluster")
 }
 \keyword{ILoReg}
 \keyword{clustering}

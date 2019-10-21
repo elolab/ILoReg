@@ -3,31 +3,33 @@
 \docType{methods}
 \name{CalculateSilhouetteInformation}
 \alias{CalculateSilhouetteInformation}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Silhouette method for estimating K}
 \usage{
 \S4method{CalculateSilhouetteInformation}{iloreg}(iloreg.object = NULL,
-  k.range = 2:50)
+  K.range = 2:50)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
+
+\item{K.range}{a numeric vector for the different K values to be tested (default 2:50)}
 }
 \value{
 iloreg Object
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+Estimate the optimal number of clusters K from the dendrogram of the hierarhical clustering using the silhouette method.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- CalculateSilhouetteInformation(iloreg_object,K.range = 2:50)
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{silhouette}

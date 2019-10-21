@@ -3,35 +3,33 @@
 \docType{methods}
 \name{RunPCA}
 \alias{RunPCA}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{PCA transformation of the joint probability matrix}
 \usage{
-\S4method{RunPCA}{iloreg}(iloreg.object = NULL, number.of.pcs = 50,
+\S4method{RunPCA}{iloreg}(iloreg.object = NULL, p = 50,
   scale = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{number.of.pcs}{logical indicating if the ggplot2 object should be returned (default FALSE)}
+\item{p}{a positive integer denoting the number of principal components to calculate and select (default 50)}
 
-\item{scale}{logical indicating if the ggplot2 object should be returned (default FALSE)}
+\item{scale}{a logical specifying whether the probabilities should be standardized to unit-variance before running PCA (default FALSE)}
 }
 \value{
-ggplot2 object if return.plot=TRUE
+iloreg object
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+Perform the PCA transformation of the joint probability matrix, which reduces the dimensionality from k*L to p
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{PCA}
+\keyword{eigendecomposition}

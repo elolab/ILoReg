@@ -7,16 +7,16 @@
 CreateILoRegObject(normalized.data)
 }
 \arguments{
-\item{normalized.data}{a gene expression matrix with genes in rows and cells in columns...}
+\item{normalized.data}{An object of class dgCMatrix, matrix or data.frame. A normalized gene expression matrix with genes in rows and cells in columns. If the object is of class matrix or data.frame, it is transformed into a LogNormalized expression matrix. The non-expressing genes are removed when the CreateILoRegObject function is called.}
 }
 \description{
 Create an ILoReg object
 }
 \examples{
-## Generate simulated single-cell RNA-Seq tags.
-library(Seurat)
-raw_data <- Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- LogNormalize(raw_data)
-iloreg <- CreateILoRegObject(normalized.data=data)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
 
 }

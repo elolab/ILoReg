@@ -7,10 +7,11 @@
 \title{Iterative Logistic Regression (ILoReg) consensus clustering}
 \description{
 R package that enables supervised learning -based clustering through L1-regularized (LASSO) logistic regression.
-Consensus clustering is performed by running ILoReg multiple times. PCA is used to reduce dimensionality of the
+Consensus clustering is performed by running ILoReg L times. PCA is used to reduce dimensionality of the
 consensus probability matrix. The Ward's method is used to perform the final clustering.
-The silhouette method can be used to choose the optimal number of clusters (K). Moreover, t-SNE or UMAP can be performed
-onto the PCA-transformed data to visualize the results.
+The silhouette method can be used to choose the optimal number of clusters (K). t-SNE or UMAP can be performed
+onto the PCA-transformed data to visualize the results. The package provides functions for differential expression analysis
+and visualization of gene.
 }
 \author{
 Johannes Smolander <pajosm@utu.fi>, Mikko Ven?l?inen, Sini Junttila, Laura L. Elo

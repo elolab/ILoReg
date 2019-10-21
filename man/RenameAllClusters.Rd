@@ -3,7 +3,7 @@
 \docType{methods}
 \name{RenameAllClusters}
 \alias{RenameAllClusters}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Renaming all clusters at once}
 \usage{
 \S4method{RenameAllClusters}{iloreg}(iloreg.object = NULL,
   new.cluster.names = "")
@@ -14,22 +14,26 @@
 \item{new.cluster.names}{object of class 'iloreg'}
 }
 \value{
-iloreg Object
+iloreg object
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+RenameAllClusters function enables renaming all cluster at once.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- SelectKClusters(iloreg_object,K=15)
+## Rename all 15 clusters to letters
+iloreg_object <- RenameAllClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{all}
+\keyword{clusters}
+\keyword{rename}

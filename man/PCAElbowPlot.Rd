@@ -3,7 +3,7 @@
 \docType{methods}
 \name{PCAElbowPlot}
 \alias{PCAElbowPlot}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Elbow plot of the standard deviations of the principal components}
 \usage{
 \S4method{PCAElbowPlot}{iloreg}(iloreg.object = NULL,
   return.plot = FALSE)
@@ -17,19 +17,19 @@
 ggplot2 object if return.plot=TRUE
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+Draw an elbow plot of the standard deviations of the principal components to deduce an appropriate value for p.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{PCA}
+\keyword{elbow}
+\keyword{plot}

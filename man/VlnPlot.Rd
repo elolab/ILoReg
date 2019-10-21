@@ -3,7 +3,7 @@
 \docType{methods}
 \name{VlnPlot}
 \alias{VlnPlot}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Gene expression visualization using violin plots}
 \usage{
 \S4method{VlnPlot}{iloreg}(iloreg.object = NULL, clustering.type = "",
   genes = "", return.plot = FALSE)
@@ -11,29 +11,32 @@
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
 
-\item{clustering.type}{object of class 'iloreg'}
+\item{clustering.type}{"manual" or "optimal". "manual" refers to the clustering formed using the "SelectKClusters" function and "optimal" to the clustering formed using the "CalculateSilhouetteInformation" function. (default "manual")}
 
-\item{genes}{object of class 'iloreg'}
+\item{genes}{a character vector denoting the gene names that are visualized}
 
-\item{return.plot}{object of class 'iloreg'}
+\item{return.plot}{return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})}
 }
 \value{
-iloreg Object
+ggplot2 object if return.plot=TRUE
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+The VlnPlot function enables visualizing expression levels of a gene, or multiple genes, across clusters using Violin plots.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
+iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
+PCAElbowPlot(iloreg_object,return.plot=FALSE)
+iloreg_object <- RunTSNE(iloreg_object,perplexity=30)
+iloreg_object <- HierarchicalClustering(iloreg_object)
+iloreg_object <- SelectKClusters(iloreg_object,K=15)
+VlnPlot(iloreg_object,genes = c("CD3D","CD8B","CD79A"))
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{plot}
+\keyword{violin}

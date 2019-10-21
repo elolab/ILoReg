@@ -3,7 +3,7 @@
 \docType{methods}
 \name{VisualizeQC}
 \alias{VisualizeQC}
-\title{Iterative logistic regression (ILoReg) consensus clustering}
+\title{Visualize the terminal projection accuracy, number of epochs/iterations and the average pairwise ARI values.}
 \usage{
 \S4method{VisualizeQC}{iloreg}(iloreg.object = NULL,
   return.plot = FALSE)
@@ -17,19 +17,23 @@
 ggplot2 object if return.plot=TRUE
 }
 \description{
-Plot histogram of the ARIs.
-}
-\details{
-populates a Boolean matrix with the same dimension as nData.
-The value is \code{TRUE} for an entry if it
-is a dropout candidate; otherwise the value is \code{FALSE}.
+Draw violin plots of the terminal projection accuracy, the number of epochs/iterations and the average pairwise ARI values.
 }
 \examples{
-a <- c(0,1,2)
+## Load 10X Chromium data and LogNormalized them.
+raw_data <- Seurat::Read10x("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices/hg19/")
+data <- Seurat::LogNormalize(raw_data)
+## Initialize the iloreg object with a normalized gene expression dataset.
+iloreg_object <- CreateILoRegObject(normalized.data=data)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
+VisualizeQC(iloreg_object)
 }
-\keyword{ILoReg}
-\keyword{clustering}
-\keyword{consensus}
-\keyword{iterative}
-\keyword{logistic}
-\keyword{regression}
+\keyword{ARI}
+\keyword{QC}
+\keyword{accuracy}
+\keyword{average}
+\keyword{control}
+\keyword{pairwise}
+\keyword{projection}
+\keyword{quality}
+\keyword{terminal}
