@@ -68,7 +68,7 @@ gene_markers_1_vs_2 <- FindGeneMarkers(iloreg_object,clusters.1 = c(1),clusters.
                                   min.pct = 0.1,
                                  min.diff.pct = NULL,
                                  pseudocount.use = 1,
-                                 min.cells.cluster = 3,
+                                 min.cells.group = 3,
                                 return.thresh = 0.01,
                                 only.pos = FALSE,max.cells.per.cluster = NULL)
 library(dplyr)

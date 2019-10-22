@@ -7,7 +7,7 @@
 \usage{
 \S4method{ClusteringScatterPlot}{iloreg}(iloreg.object = NULL,
   clustering.type = "manual", return.plot = FALSE,
-  dim.reduction.type = "", point.size = 0.7)
+  dim.reduction.type = "", point.size = 0.7, title = "")
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -19,6 +19,8 @@
 \item{dim.reduction.type}{"tsne" or "umap" (default "tsne")}
 
 \item{point.size}{point size (default 0.7)}
+
+\item{title}{text to write above the plot}
 }
 \value{
 ggplot2 object if return.plot=TRUE

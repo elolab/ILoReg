@@ -6,7 +6,8 @@
 \title{Visualize gene expression over nonlinear dimensionality reduction}
 \usage{
 \S4method{GeneScatterPlot}{iloreg}(iloreg.object = NULL, genes = "",
-  return.plot = FALSE, dim.reduction.type = "tsne", point.size = 0.7)
+  return.plot = FALSE, dim.reduction.type = "tsne", point.size = 0.7,
+  title = "")
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -18,6 +19,8 @@
 \item{dim.reduction.type}{"tsne" or "umap" (default "tsne")}
 
 \item{point.size}{point size (default 0.7)}
+
+\item{title}{text to write above the plot}
 }
 \value{
 ggplot2 object if return.plot=TRUE

@@ -41,7 +41,7 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
                                   min.pct = 0.1,
                                  min.diff.pct = NULL,
                                  pseudocount.use = 1,
-                                 min.cells.cluster = 3,
+                                 min.cells.group = 3,
                                 return.thresh = 0.01,
                                 only.pos = FALSE,max.cells.per.cluster = NULL)
 library(dplyr)

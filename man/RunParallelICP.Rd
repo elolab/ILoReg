@@ -16,7 +16,7 @@
 
 \item{d}{A numeric greater than 0 and smaller than 1 that determines how many cells 'n' are down- or oversampled from each cluster into the training data. (d in n=N/k*d), where N is the total number of cells, k is the number of clusters in ICP. (default 0.3)}
 
-\item{L}{A positive integer greater than 1. Number of ICP runs. Constraining L was not studied in the manuscript. (Default 200)}
+\item{L}{A positive integer greater than 1. Number of ICP runs. Contraining L has not been studied.  (Default 200)}
 
 \item{r}{A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. (default 5). Increasing recommended with a significantly larger sample size (tens of thousands).}
 

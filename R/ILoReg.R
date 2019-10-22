@@ -228,12 +228,12 @@ setMethod("RunParallelICP", "iloreg", function(iloreg.object, k,d,L,r,C,type,max
                           .multicombine = TRUE)  %dopar% {
                             set.seed(seeds[task])
                             RunICP(normalized.data = iloreg.object@normalized.data,
-                                                      k = iloreg.object@k,
-                                                      d = iloreg.object@d,
-                                                      r = iloreg.object@r,
-                                                      C = iloreg.object@C,
-                                                      type = type,
-                                                      max.number.of.iterations = max.number.of.iterations)
+                                   k = iloreg.object@k,
+                                   d = iloreg.object@d,
+                                   r = iloreg.object@r,
+                                   C = iloreg.object@C,
+                                   type = type,
+                                   max.number.of.iterations = max.number.of.iterations)
                           }
     stopCluster(cl)
 
@@ -241,12 +241,12 @@ setMethod("RunParallelICP", "iloreg", function(iloreg.object, k,d,L,r,C,type,max
     iloreg_out <- list()
     for (l in 1:L) {
       res <- RunICP(normalized.data = iloreg.object@normalized.data,
-                                       k = iloreg.object@k,
-                                       d = iloreg.object@d,
-                                       r = iloreg.object@r,
-                                       C = iloreg.object@C,
-                                       type = type,
-                                       max.number.of.iterations = max.number.of.iterations)
+                    k = iloreg.object@k,
+                    d = iloreg.object@d,
+                    r = iloreg.object@r,
+                    C = iloreg.object@C,
+                    type = type,
+                    max.number.of.iterations = max.number.of.iterations)
       consensus_probability[[l]] <- res
     }
   }
@@ -986,7 +986,7 @@ setMethod("RenameCluster", "iloreg", function(iloreg.object,old.cluster.name,new
 
 
 
-setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=FALSE,dim.reduction.type="tsne",point.size=0.7){
+setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=FALSE,dim.reduction.type="tsne",point.size=0.7,title=""){
   standardGeneric("GeneScatterPlot")
 })
 
@@ -1003,6 +1003,7 @@ setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=F
 #' @param return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
+#' @param title text to write above the plot
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords gene scatter plot visualization
 #' @import ggplot2
@@ -1025,7 +1026,7 @@ setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=F
 #' iloreg_object <- RunUMAP(iloreg_object,perplexity=30)
 #' GeneScatterPlot(iloreg_object,c("CCR7","CD3D","S100A4"),dim.reduction.type = "umap",point.size=0.7)
 
-setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,dim.reduction.type,point.size){
+setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,dim.reduction.type,point.size,title){
 
   if (dim.reduction.type=="umap")
   {
@@ -1054,16 +1055,30 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
     df$group <- color.by
     colnames(df) <- c("dim1","dim2","group")
 
-    p<-ggplot(df, aes(x=dim1, y=dim2)) +
-      geom_point(size=point.size,aes(color=group)) +
-      scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
-                             high = "blue",name = genes) +
-      xlab(xlab) +
-      ylab(ylab) +
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            panel.background = element_blank(), axis.line = element_line(colour = "black"))
+    if (title!="")
+    {
+      p<-ggplot(df, aes(x=dim1, y=dim2)) +
+        geom_point(size=point.size,aes(color=group)) +
+        scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
+                               high = "blue",name = genes) +
+        xlab(xlab) +
+        ylab(ylab) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
+    } else {
+      p<-ggplot(df, aes(x=dim1, y=dim2)) +
+        geom_point(size=point.size,aes(color=group)) +
+        scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
+                               high = "blue",name = genes) +
+        xlab(xlab) +
+        ylab(ylab) +
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+        ggtitle(title) +
+        theme(plot.title = element_text(hjust = 0.5))
 
+    }
     if (return.plot) {
       return(p)
     } else {
@@ -1086,15 +1101,28 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
       df$group <- color.by
       colnames(df) <- c("dim1","dim2","group")
 
-      p<-ggplot(df, aes(x=dim1, y=dim2)) +
-        geom_point(size=point.size,aes(color=group)) +
-        scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
-                               high = "blue",name = gene) +
-        xlab(xlab) +
-        ylab(ylab) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"))
+      if (title!="") {
+        p<-ggplot(df, aes(x=dim1, y=dim2)) +
+          geom_point(size=point.size,aes(color=group)) +
+          scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
+                                 high = "blue",name = gene) +
+          xlab(xlab) +
+          ylab(ylab) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                panel.background = element_blank(), axis.line = element_line(colour = "black"))
+      } else {
+        p<-ggplot(df, aes(x=dim1, y=dim2)) +
+          geom_point(size=point.size,aes(color=group)) +
+          scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
+                                 high = "blue",name = gene) +
+          xlab(xlab) +
+          ylab(ylab) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+          ggtitle(title) +
+          theme(plot.title = element_text(hjust = 0.5))
 
+      }
 
       plot_list[[gene]] <- p
 
@@ -1112,7 +1140,7 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
 })
 
 
-setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type="manual",return.plot=FALSE,dim.reduction.type="",point.size=0.7){
+setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type="manual",return.plot=FALSE,dim.reduction.type="",point.size=0.7,title=""){
   standardGeneric("ClusteringScatterPlot")
 })
 
@@ -1129,6 +1157,7 @@ setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type=
 #' @param return.plot object of class 'iloreg' (default \code{FALSE})
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
+#' @param title text to write above the plot
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords clustering scatter plot nonlinear dimensionality reduction
 #' @import ggplot2
@@ -1153,7 +1182,7 @@ setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type=
 #' iloreg_object <- RunUMAP(iloreg_object,perplexity=30)
 #' ClusteringScatterPlot(iloreg_object,clustering.type="manual",dim.reduction.type = "umap",point.size=0.7)
 #' ClusteringScatterPlot(iloreg_object,clustering.type="optimal",dim.reduction.type = "umap",point.size=0.7)
-setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.type,return.plot,dim.reduction.type,point.size){
+setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.type,return.plot,dim.reduction.type,point.size,title){
 
   if (dim.reduction.type=="umap")
   {
@@ -1189,12 +1218,27 @@ setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.t
   cluster_centers <- lapply(levels(color.by),function(x) apply(two.dim.data_[names(color.by)[color.by==x],,drop=FALSE],2,median))
   cluster_centers <- do.call(rbind,cluster_centers)
 
-  p<-ggplot(df, aes(x=dim1, y=dim2)) +
-    geom_point(size=point.size,aes(color=cluster)) +
-    xlab(xlab) +
-    ylab(ylab) +
-    theme_classic() +
-    annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(color.by))
+  if (title=="")
+  {
+    p<-ggplot(df, aes(x=dim1, y=dim2)) +
+      geom_point(size=point.size,aes(color=cluster)) +
+      xlab(xlab) +
+      ylab(ylab) +
+      theme_classic() +
+      annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(color.by))
+
+  } else {
+
+    p<-ggplot(df, aes(x=dim1, y=dim2)) +
+      geom_point(size=point.size,aes(color=cluster)) +
+      xlab(xlab) +
+      ylab(ylab) +
+      theme_classic() +
+      annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(color.by)) +
+      ggtitle(title) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+  }
 
   if (return.plot) {
     return(p)
@@ -1263,7 +1307,7 @@ setGeneric("FindAllGeneMarkers", function(iloreg.object=NULL,clustering.type="",
 #'                                   min.pct = 0.1,
 #'                                  min.diff.pct = NULL,
 #'                                  pseudocount.use = 1,
-#'                                  min.cells.cluster = 3,
+#'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
 #' library(dplyr)
@@ -1334,7 +1378,7 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
     data_other <- data[,clustering!=cluster]
 
     # Skip if the number of cells in the test or the reference set is lower than min.cells.group
-    if (ncol(data_cluster) < min.cells.cluster | ncol(data_other) < min.cells.cluster)
+    if (ncol(data_cluster) < min.cells.group | ncol(data_other) < min.cells.group)
     {
       cat("-----------------------------------\n")
       next
@@ -1435,19 +1479,19 @@ setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
 
 
 setGeneric("FindGeneMarkers", function(iloreg.object=NULL,
-                                   clusters.1 = NULL,
-                                   clusters.2 = NULL,
-                                   clustering.type="",
-                                   test="wilcox",
-                                   logfc.threshold = 0.25,
-                                   min.pct = 0.1,
-                                   min.diff.pct = NULL,
-                                   min.cells.group = 3,
-                                   max.cells.per.cluster = NULL,
-                                   random.seed = 1,
-                                   pseudocount.use = 1,
-                                   return.thresh = 0.01,
-                                   only.pos=FALSE){
+                                       clusters.1 = NULL,
+                                       clusters.2 = NULL,
+                                       clustering.type="",
+                                       test="wilcox",
+                                       logfc.threshold = 0.25,
+                                       min.pct = 0.1,
+                                       min.diff.pct = NULL,
+                                       min.cells.group = 3,
+                                       max.cells.per.cluster = NULL,
+                                       random.seed = 1,
+                                       pseudocount.use = 1,
+                                       return.thresh = 0.01,
+                                       only.pos=FALSE){
   standardGeneric("FindGeneMarkers")
 })
 
@@ -1499,7 +1543,7 @@ setGeneric("FindGeneMarkers", function(iloreg.object=NULL,
 #'                                   min.pct = 0.1,
 #'                                  min.diff.pct = NULL,
 #'                                  pseudocount.use = 1,
-#'                                  min.cells.cluster = 3,
+#'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
 #' library(dplyr)
@@ -1507,19 +1551,19 @@ setGeneric("FindGeneMarkers", function(iloreg.object=NULL,
 #' gene_markers  %>% top_n(10, log2FC) -> top10
 #' gene_markers  %>% top_n(1, log2FC) -> top1
 setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
-                                            clusters.1,
-                                            clusters.2,
-                                            clustering.type,
-                                            test,
-                                            logfc.threshold,
-                                            min.pct,
-                                            min.diff.pct,
-                                            min.cells.group,
-                                            max.cells.per.cluster,
-                                            random.seed,
-                                            pseudocount.use,
-                                            return.thresh,
-                                            only.pos)
+                                                clusters.1,
+                                                clusters.2,
+                                                clustering.type,
+                                                test,
+                                                logfc.threshold,
+                                                min.pct,
+                                                min.diff.pct,
+                                                min.cells.group,
+                                                max.cells.per.cluster,
+                                                random.seed,
+                                                pseudocount.use,
+                                                return.thresh,
+                                                only.pos)
 {
 
   if (clustering.type=="manual")
@@ -1588,7 +1632,7 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   data_other <- data[,clustering!=cluster]
 
   # Skip if the number of cells in the test or the reference set is lower than min.cells.group
-  if (ncol(data_cluster) < min.cells.cluster | ncol(data_other) < min.cells.cluster)
+  if (ncol(data_cluster) < min.cells.group | ncol(data_other) < min.cells.group)
   {
     next
   }
@@ -1778,8 +1822,8 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
 
 
 setGeneric("GeneHeatmap", function(iloreg.object=NULL,
-                               clustering.type="",
-                               gene.marker.data.frame=data.frame()){
+                                   clustering.type="",
+                                   gene.marker.data.frame=data.frame()){
   standardGeneric("GeneHeatmap")
 })
 
@@ -1819,7 +1863,7 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #'                                   min.pct = 0.1,
 #'                                  min.diff.pct = NULL,
 #'                                  pseudocount.use = 1,
-#'                                  min.cells.cluster = 3,
+#'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
 #' library(dplyr)
@@ -1829,8 +1873,8 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #'
 #' GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10)
 setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
-                                        clustering.type,
-                                        gene.marker.data.frame)
+                                            clustering.type,
+                                            gene.marker.data.frame)
 {
 
   if (clustering.type=="manual")
@@ -1854,11 +1898,11 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
   annotation = data.frame(cluster=sort(clustering))
 
   pheatmap(data,show_colnames = FALSE,
-                     gaps_col = cumsum(table(clustering[order(clustering)])),
-                     gaps_row = cumsum(table(gene.markers[!duplicated(gene.markers$gene),"cluster"])),
-                     cluster_rows = FALSE,
-                     cluster_cols = FALSE,
-                     annotation_col = annotation)
+           gaps_col = cumsum(table(clustering[order(clustering)])),
+           gaps_row = cumsum(table(gene.markers[!duplicated(gene.markers$gene),"cluster"])),
+           cluster_rows = FALSE,
+           cluster_cols = FALSE,
+           annotation_col = annotation)
 
 
 
@@ -1872,10 +1916,10 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
 
 
 setGeneric("AnnotationScatterPlot", function(iloreg.object=NULL,
-                                   annotation=c(),
-                                   return.plot=FALSE,
-                                   dim.reduction.type="",
-                                   point.size=0.7){
+                                             annotation=c(),
+                                             return.plot=FALSE,
+                                             dim.reduction.type="",
+                                             point.size=0.7){
   standardGeneric("AnnotationScatterPlot")
 })
 
@@ -2010,8 +2054,8 @@ setGeneric("GeneDropoutRatePlot", function(iloreg.object=NULL,
 #' iloreg_object <- SelectKClusters(iloreg_object,K=15)
 #' GeneDropoutRatePlot(iloreg_object,genes = c("CD79A","TCL1A","IGLL5","VPREB3"),use.clusters = c(24,15,14,2),clustering.type = "manual")
 setMethod("GeneDropoutRatePlot", "iloreg", function(iloreg.object,
-                                                      genes,
-                                                      return.plot,use.clusters,clustering.type)
+                                                    genes,
+                                                    return.plot,use.clusters,clustering.type)
 {
 
   if (is.null(use.clusters))
