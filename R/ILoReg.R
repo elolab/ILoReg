@@ -100,7 +100,7 @@ CreateILoRegObject <- function(normalized.data)
   return(iloreg_object)
 }
 
-setGeneric("RunParallelICP", function(iloreg.object=NULL,k=15,d=0.3,L=100,r=5,C=0.5,type="L1",max.number.of.iterations=200,threads=0,seed=1){
+setGeneric("RunParallelICP", function(iloreg.object=NULL,k=15,d=0.3,L=200,r=5,C=0.3,type="L1",max.number.of.iterations=200,threads=0,seed=1){
   standardGeneric("RunParallelICP")
 })
 
