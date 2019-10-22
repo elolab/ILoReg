@@ -417,7 +417,7 @@ setMethod("RunPCA", "iloreg", function(iloreg.object,p,scale){
   A = crossprod(X)
 
   # Perform eigendecomposition
-  eigs_sym_out <- eigs_sym(A, number.of.pcs, which = "LM")
+  eigs_sym_out <- eigs_sym(A, p, which = "LM")
 
   rotated <- X %*% eigs_sym_out$vectors
   colnames(rotated) <- paste0("PC",1:ncol(rotated))
