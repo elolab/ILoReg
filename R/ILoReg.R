@@ -116,7 +116,7 @@ setGeneric("RunParallelICP", function(iloreg.object=NULL,k=15,d=0.3,L=200,r=5,C=
 #' @param iloreg.object object of class 'iloreg'
 #' @param k A positive integer greater or equal to 2, which denotes the number of clusters in iterative logistic regression. (default 15)
 #' @param d A numeric greater than 0 and smaller than 1 that determines how many cells 'n' are down- or oversampled from each cluster into the training data. (d in n=N/k*d), where N is the total number of cells, k is the number of clusters in ICP. (default 0.3)
-#' @param L A positive integer greater than 1. Number of ICP runs. Constraining L was not studied in the manuscript. (Default 200)
+#' @param L A positive integer greater than 1. Number of ICP runs. Contraining L has not been studied.  (Default 200)
 #' @param r A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. (default 5). Increasing recommended with a significantly larger sample size (tens of thousands).
 #' @param C A positive real number, the cost of constraints violation in the L1-regularized logistic regression model from the LIBLINEAR library. (default 0.3). Decreasing leads to more stringent feature selection, i.e. less genes are selected that are used to build the classifier.
 #' @param type "L1" or "L2". L2-regularization was not investigated in the manuscript. (default "L1")
