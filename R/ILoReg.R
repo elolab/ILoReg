@@ -330,7 +330,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
   p1 <- ggplot(df1, aes(x=Measure,y=value))+
     geom_violin(trim=TRUE,fill="#F8766D") +
     theme_bw() +
-    ylab("Clustering prediction accuracy") +
+    ylab("Terminal projection accuracy") +
     xlab("") +
     # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
@@ -356,7 +356,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
   p3 <- ggplot(df3, aes(x=Measure,y=value))+
     geom_violin(trim=TRUE,fill="#F8766D") +
     theme_bw() +
-    ylab("Average pairwise ARI") +
+    ylab("Average Pairwise ARI") +
     xlab("") +
     # geom_boxplot(width=0.2)+
     # geom_jitter(shape=16, position=position_jitter(0.2)) +
@@ -376,7 +376,7 @@ setMethod("VisualizeQC", "iloreg", function(iloreg.object,return.plot){
 
 
 
-setGeneric("RunPCA", function(iloreg.object=NULL,p=50,scale=FALSE){
+setGeneric("RunPCA", function(iloreg.object=NULL,p=50,scale=FALSE,threshold=0){
   standardGeneric("RunPCA")
 })
 
@@ -391,6 +391,7 @@ setGeneric("RunPCA", function(iloreg.object=NULL,p=50,scale=FALSE){
 #' @param iloreg.object object of class 'iloreg'
 #' @param p a positive integer denoting the number of principal components to calculate and select (default 50)
 #' @param scale a logical specifying whether the probabilities should be standardized to unit-variance before running PCA (default FALSE)
+#' @param threshold a thresfold for filtering out ICP runs before PCA with the lower terminal projection accuracy below the threshold (default 0)
 #' @return iloreg object
 #' @keywords PCA eigendecomposition
 #' @importFrom RSpectra eigs_sym
@@ -404,13 +405,17 @@ setGeneric("RunPCA", function(iloreg.object=NULL,p=50,scale=FALSE){
 #' iloreg_object <- RunParallelICP(iloreg_object,threads = 12,seed=1)
 #' VisualizeQC(iloreg_object)
 #' iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
-setMethod("RunPCA", "iloreg", function(iloreg.object,p,scale){
+setMethod("RunPCA", "iloreg", function(iloreg.object,p,scale,threshold){
 
   iloreg.object@number.of.pcs <- p
   iloreg.object@scale.pca <- scale
 
-  X <- do.call(cbind,iloreg.object@consensus.probability)
-
+  if (threshold==0)
+  {
+    X <- do.call(cbind,iloreg.object@consensus.probability)
+  } else {
+    X <- do.call(cbind,iloreg.object@consensus.probability[unlist(lapply(iloreg_object@metrics,function(x) x["ARI",])) >= threshold])
+  }
   X <- scale(X,scale = scale,center = TRUE)
 
   # X^T %*% X

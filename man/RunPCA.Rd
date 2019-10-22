@@ -6,7 +6,7 @@
 \title{PCA transformation of the joint probability matrix}
 \usage{
 \S4method{RunPCA}{iloreg}(iloreg.object = NULL, p = 50,
-  scale = FALSE)
+  scale = FALSE, threshold = 0)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -14,6 +14,8 @@
 \item{p}{a positive integer denoting the number of principal components to calculate and select (default 50)}
 
 \item{scale}{a logical specifying whether the probabilities should be standardized to unit-variance before running PCA (default FALSE)}
+
+\item{threshold}{a thresfold for filtering out ICP runs before PCA with the lower terminal projection accuracy below the threshold (default 0)}
 }
 \value{
 iloreg object
