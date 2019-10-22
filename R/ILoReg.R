@@ -1889,7 +1889,7 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
   }
 
   data <- iloreg.object@normalized.data
-  data <- data[unique(gene.markers$gene),]
+  data <- data[unique(gene.marker.data.frame$gene),]
   # data <- scale(data,center = TRUE,scale = TRUE)
   data <- data[,order(clustering)]
 
@@ -1899,7 +1899,7 @@ setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
 
   pheatmap(data,show_colnames = FALSE,
            gaps_col = cumsum(table(clustering[order(clustering)])),
-           gaps_row = cumsum(table(gene.markers[!duplicated(gene.markers$gene),"cluster"])),
+           gaps_row = cumsum(table(gene.marker.data.frame[!duplicated(gene.marker.data.frame$gene),"cluster"])),
            cluster_rows = FALSE,
            cluster_cols = FALSE,
            annotation_col = annotation)
