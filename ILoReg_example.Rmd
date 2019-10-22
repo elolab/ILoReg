@@ -1,85 +1,175 @@
 ---
-title: "ILoReg example"
+title: "ILoReg Package Manual"
 output: html_notebook
 ---
 
+<style>
+body {
+text-align: justify}
+</style>
 
-Read 10X Chromium PBMC data and log normalize them 
+Edited: October 21, 2019
+
+# Introduction to the method
+ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that ILoReg was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene, which can for example be used for studying differential expression of *CD8A* and *CD8B* genes.  
+
+The figure below depicts the workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. [Seurat](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html). 
+
+![*Figure: Analysis workflows of ILoReg and a feature-selection based approach*](C:/Users/pajosm/Documents/vignette_ILoReg/figure.png)
+
+Unlike most scRNA-seq data analysis pipelines, ILoReg does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. The second and final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
+
+# Example: Peripheral Blood Mononuclear Cells
+
+In the following, we go through the different steps of ILoReg's workflow and demonstrate it using a Peripheral Blood Mononuclear Cell (PBMC) dataset. The dataset (pbmc3k) can be downloaded from the public database of the 10X Genomics company: [10X Datasets](https://support.10xgenomics.com/single-cell-gene-expression/datasets). 
+
+
+### Load and Normalize a Dataset
+
+To load and normalize the dataset, we use the Read10X and LogNormalize functions from Seurat R package. Currently, ILoReg R package does not have its own functions for normalizing scRNA-seq data. Therefore, the user must rely on other R packages to  perform this step.
+
+
 ```{r}
-data <- Seurat::LogNormalize(Seurat::Read10X("~/../Downloads/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"))
+data <- Seurat::LogNormalize(Seurat::Read10X("D:/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
 ```
 
-Create object of iloreg class
+### Setup the iloreg R Object
+
+The only required input for ILoReg is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. **Please note that the method has been designed to work with sparse data, i.e. with lots of zero values. If for example the features of your dataset have been standardized, the method is likely to work much slower and require more RAM.**
+
 ```{r}
 library(ILoReg)
+# Create iloreg object.
 iloreg_object <- CreateILoRegObject(normalized.data = data)
 ```
 
-Run consensus ILoReg. This is the slowest step of the workflow and parallel processing highly speeds up the process. 
+### Run ICP clustering algorithm *L* times
+
+Next comes by far the most computationally demanding part of the pipeline, 
+in which *L* ICP solutions are computed with different random seeds. This step lasted ~2 hr with three threads on a laptop. 
+
+In the following, we give a brief summary of the parameters.
+
+* $k$: The number of clusters in ICP. Default $15$. A lower value generates less cluster probabilities. Increasing $k$ is the easiest way to increase the complexity of the outcome, i.e. more subpopulations with subtle differences emerge.
+* $C$: A positive real number, the cost of constraints violation in the L1-regularized logistic regression model from the [LIBLINEAR library](https://www.csie.ntu.edu.tw/~cjlin/liblinear/): $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{l} \log (1+ e^{-y_i w^T w})$$ Default 0.3. Decreasing leads to more stringent feature selection, i.e. less genes are selected that are used to train the projection classifier.
+* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n=Nd/k$), where $N$ is the total number of cells. Default $0.3$. Our recommendation is to not increase $d$ above $0.5$, as this will lead to more dissimilar ICP runs, which in turn induces less variation into the consensus solution. 
+* $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. Default $5$. Increasing recommended with a significantly larger sample size (tens of thousands).
+* $L$: Number of ICP runs. Default $200$. 
+* $type$: "L1" or "L2". "L2" denotes L2-regularization (Tikhonov/Ridge regularization), which was not investigated in the manuscript. Default "L1".
+* $seed$: To make the results reproducible, a positive integer that specifies the random seed to be set before randomly generating random seeds for each parallel task. Default $1$.
+* $threads$: The number of threads to use in parallel computing. Default $0$, which uses the number of available threads $-1$. Parallelization can be disabled with value $1$. 
+
 ```{r}
-iloreg_object <- RunILoRegConsensus(iloreg_object,threads = 3,L = 50)
+# Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
+tictoc::tic()
+iloreg_object <- RunParallelICP(iloreg_object,threads = 3,L = 200,k = 15,C = 0.3,r = 5,d = 0.3,type = "L1",seed = 1)
+tictoc::toc()
+# At this point saving the results is recommended.
+saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object.rds")
 ```
 
 
-Visualize distributions of the final ARI acquired by ILoReg and the number of iterations.
+### Quality control
+
+Next, we consider two quality control measures of ICP that can aid detecting issues with the ICP analysis.
+
+First, the terminal projection accuracy that denotes the adjusted Rand index (ARI) between the clustering and its logistic regression projection at the final epoch (iteration) of ICP. Projection accuracy 1 would mean the classifier was able to predict the cluster identity of all cells correctly. Higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$. 
+
+Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower and smaller $k$ to higher the average pairwise ARI. The relation between $C$ and $r$ with the average pairwise ARI is not as unambiguous.
+
 ```{r}
-VisualizeConsensusInformation(iloreg_object)
+# Draw violin plots of the terminal clustering projection accuracy, the number of epochs and the average pairwise ARI.
+# Each data point represents a ICP run.
+VisualizeQC(iloreg_object,return.plot = F)
 ```
 
-Run PCA over the consensus probability matrix and tSNE or UMAP
+
+### PCA transformation of the joint probability matrix
+
+The $L$ probability matrices are merged into a joint probability matrix, which is transformed into a lower dimension $p$ by principal component analysis (PCA). At this point, the user can filter out ICP runs that achieved lower terminal projection accuracy. Moreover, scaling the probabilities to unit-variance is supported.
+
 ```{r}
-iloreg_object <- ILoReg::RunPCA(iloreg_object,number.of.pcs = 50,scale = FALSE)
-iloreg_object <- ILoReg::RunUMAP(iloreg_object)
-iloreg_object <- ILoReg::RunTSNE(iloreg_object,perplexity=30)
+tictoc::tic()
+iloreg_object <- RunPCA(iloreg_object,p=50,scale = FALSE,threshold = 0)
+tictoc::toc()
+
 ```
 
+PCA transformation requires the user to select the number of principal components, for which we selected default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects $p$.
 
-Clustering of the PCA-rotated data using Ward's agglomeration
+```{r}
+tictoc::tic()
+PCAElbowPlot(iloreg_object)
+tictoc::toc()
+```
+
+### Nonlinear dimensionality reduction
+
+Nonliner dimensionality reduction 
+
+```{r}
+tictoc::tic()
+set.seed(1)
+iloreg_object <- RunUMAP(iloreg_object)
+iloreg_object <- RunTSNE(iloreg_object,perplexity=30)
+tictoc::toc()
+```
+
+### Hierarchical clustering using Ward's agglomeration
+
 ```{r}
 iloreg_object <- HierarchicalClustering(iloreg_object)
 ```
 
 
+### Estimating the optimal number of clusters (**optimal**)
 Calculate the silhouette information for K in 2:50 and visualize the average silhouette values. Moreover, the clustering acquired using K with the highest average silhouette is saved to *clustering.optimal* slot.
 ```{r}
 iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:30)
-SilhouetteCurve(iloreg_object)
-```
-
-Manually select K=20 clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
-```{r}
-iloreg_object <- ManualClustering(iloreg_object,K=25)
+p2 <- SilhouetteCurve(iloreg_object,return.plot = T)
 ```
 
 
 
 Visualize expression of CD8B gene across the cells - a CD8+ T cell marker.
 ```{r}
-GeneScatterPlot(iloreg_object,"CCR7",dim.reduction.type = "umap")
-GeneScatterPlot(iloreg_object,"CCR7",dim.reduction.type = "tsne")
+GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "umap")
+GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "tsne")
+
+
 ```
+
+
+Manually select K=20 clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
+```{r}
+tictoc::tic()
+iloreg_object <- SelectKClusters(iloreg_object,K=30)
+tictoc::toc()
+```
+
 
 Visualize tSNE and UMAP transformations along with the optimal and manual clusterings.
 ```{r}
-ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "umap")
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
-ClusterScatterPlot(iloreg_object,"optimal",dim.reduction.type = "tsne")
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
 ```
 
-Merge two clusters (10 and 9)
-```{r Fig0, echo=TRUE, fig.height=7, fig.width=14}
-p1 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("Before merging 23 and 6")
-iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(23,6))
-p2 <- ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap",return.plot = T)+ggplot2::ggtitle("After merging 23 and 6")
-cowplot::plot_grid(p1,p2)
+
+
+Merge two clusters (4 and 9)
+```{r Fig0, echo=TRUE, fig.height=4, fig.width=6}
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne",return.plot = F,title = "Before merging clusters")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(9,4))
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(21,29,12,11))
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(19,17,25))
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne",return.plot = F,title = "After merging clusters")
 ```
 
 Rename clusters to letters
 ```{r}
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
-iloreg_object <- RenameClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
-ClusterScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
+iloreg_object <- RenameAllClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
+ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
 ```
 
 Find gene markers for the manual clustering
@@ -90,27 +180,11 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
                                    test = "wilcox",
                                    logfc.threshold = 0.25,
                                    min.pct = 0.25,
-                                   min.diff.pct = 0.25,
+                                   min.diff.pct = NULL,
                                    pseudocount.use = 1,
-                                   min.cells.cluster = 3,
+                                   min.cells.group = 3,
                                    return.thresh = 0.01,
                                    only.pos = FALSE,max.cells.per.cluster = NULL)
-
-```
-
-Find gene markers for clusters F and A from the manual clustering
-```{r}
-
-gene_markers_F_A <- FindGeneMarkers(iloreg_object,clusters.1 = "F",clusters.2 = "A",
-                                   clustering.type = "manual",
-                                   test = "wilcox",
-                                   logfc.threshold = 0.25,
-                                   min.pct = 0.25,
-                                   min.diff.pct = 0.25,
-                                   pseudocount.use = 1,
-                                   min.cells.cluster = 3,
-                                   return.thresh = 0.01,
-                                   only.pos = FALSE)
 
 ```
 
@@ -124,26 +198,28 @@ gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
 ```
 
 
-Make gene expression scatter plots of the top 1 markers
-```{r Fig1, echo=TRUE, fig.height=30, fig.width=30}
-cowplot::plot_grid(plotlist = lapply(unique(top10$gene),function(x) GeneScatterPlot(iloreg_object,x,dim.reduction.type = "tsne",return.plot = T)))
+```{r FigTop1Scatter, echo=TRUE, fig.height=12, fig.width=20}
+GeneScatterPlot(iloreg_object,genes = unique(top1$gene),dim.reduction.type = "tsne",point.size = 0.7)
 ```
 
 
 
-Make gene expression violin plots of the top 1 markers
-```{r Fig3, echo=TRUE, fig.height=20, fig.width=40}
-VlnPlot(iloreg_object,clustering.type = "manual",genes = unique(top1$gene))
+Draw gene expression violin plots
+```{r FigVlnPlot, echo=TRUE, fig.height=5, fig.width=12}
+VlnPlot(iloreg_object,clustering.type = "manual",genes = c("CD3D","CST3","CD79A"))
 ```
 
 Make gene marker heatmap for the manual clustering
-```{r Fig4, echo=TRUE, fig.height=15, fig.width=15}
-GeneHeatmap(iloreg_object,clustering.type = "manual",gene.markers = top10)
+```{r FigHM, echo=TRUE, fig.height=15, fig.width=15}
+GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10)
 
 ```
 
 
+
+
 ```{r}
-pheatmap::pheatmap(iloreg_object@normalized.data[unique(top10$gene),],show_colnames = FALSE)
+saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object_final.rds")
+
 ```
 
