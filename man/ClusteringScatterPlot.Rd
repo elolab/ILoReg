@@ -7,7 +7,8 @@
 \usage{
 \S4method{ClusteringScatterPlot}{iloreg}(iloreg.object = NULL,
   clustering.type = "manual", return.plot = FALSE,
-  dim.reduction.type = "", point.size = 0.7, title = "")
+  dim.reduction.type = "", point.size = 0.7, title = "",
+  show.legend = TRUE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -21,12 +22,14 @@
 \item{point.size}{point size (default 0.7)}
 
 \item{title}{text to write above the plot}
+
+\item{show.legend}{whether to show the legend on the right side of the plot}
 }
 \value{
 ggplot2 object if return.plot=TRUE
 }
 \description{
-ClusteringScatterPlot function enables visualizing the clustering over nonliner dimensionality reduction (t-SNE or UMAP)
+ClusteringScatterPlot function enables visualizing the clustering over nonliner dimensionality reduction (t-SNE or UMAP).
 }
 \examples{
 ## Load 10X Chromium data and LogNormalized them.

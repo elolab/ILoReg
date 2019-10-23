@@ -658,7 +658,7 @@ setMethod("CalculateSilhouetteInformation", "iloreg", function(iloreg.object,K.r
   distance_matrix <- parDist(iloreg.object@rotated.consensus.probability, method = "euclidean", threads = 1)
   distance_matrix <- as.matrix(distance_matrix)
   sis <- c()
-  for (k in k.range)
+  for (k in K.range)
   {
     clustering <- cutree(iloreg.object@hc,k=k)
 
@@ -677,7 +677,7 @@ setMethod("CalculateSilhouetteInformation", "iloreg", function(iloreg.object,K.r
   iloreg.object@clustering.optimal <- clustering
   iloreg.object@K.optimal <- k_optimal
 
-  names(sis) <- k.range
+  names(sis) <- K.range
   iloreg.object@silhouette.information <- sis
 
   return(iloreg.object)
@@ -1145,7 +1145,7 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
 })
 
 
-setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type="manual",return.plot=FALSE,dim.reduction.type="",point.size=0.7,title=""){
+setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type="manual",return.plot=FALSE,dim.reduction.type="",point.size=0.7,title="",show.legend=TRUE){
   standardGeneric("ClusteringScatterPlot")
 })
 
@@ -1155,7 +1155,7 @@ setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type=
 #' @name ClusteringScatterPlot
 #'
 #' @description
-#' ClusteringScatterPlot function enables visualizing the clustering over nonliner dimensionality reduction (t-SNE or UMAP)
+#' ClusteringScatterPlot function enables visualizing the clustering over nonliner dimensionality reduction (t-SNE or UMAP).
 #'
 #' @param iloreg.object object of class 'iloreg'
 #' @param clustering.type "manual" or "optimal". "manual" refers to the clustering formed using the "SelectKClusters" function and "optimal" to the clustering formed using the "CalculateSilhouetteInformation" function. (default "manual")
@@ -1163,6 +1163,7 @@ setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type=
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
 #' @param title text to write above the plot
+#' @param show.legend whether to show the legend on the right side of the plot
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords clustering scatter plot nonlinear dimensionality reduction
 #' @import ggplot2
@@ -1187,7 +1188,7 @@ setGeneric("ClusteringScatterPlot", function(iloreg.object=NULL,clustering.type=
 #' iloreg_object <- RunUMAP(iloreg_object,perplexity=30)
 #' ClusteringScatterPlot(iloreg_object,clustering.type="manual",dim.reduction.type = "umap",point.size=0.7)
 #' ClusteringScatterPlot(iloreg_object,clustering.type="optimal",dim.reduction.type = "umap",point.size=0.7)
-setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.type,return.plot,dim.reduction.type,point.size,title){
+setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.type,return.plot,dim.reduction.type,point.size,title,show.legend){
 
   if (dim.reduction.type=="umap")
   {
@@ -1243,6 +1244,11 @@ setMethod("ClusteringScatterPlot", "iloreg", function(iloreg.object,clustering.t
       ggtitle(title) +
       theme(plot.title = element_text(hjust = 0.5))
 
+  }
+
+  if (!show.legend)
+  {
+    p <- p + theme(legend.position = "none")
   }
 
   if (return.plot) {
