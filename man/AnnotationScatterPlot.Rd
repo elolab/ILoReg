@@ -7,7 +7,7 @@
 \usage{
 \S4method{AnnotationScatterPlot}{iloreg}(iloreg.object = NULL,
   annotation = c(), return.plot = FALSE, dim.reduction.type = "",
-  point.size = 0.7)
+  point.size = 0.7, show.legend = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -19,6 +19,8 @@
 \item{dim.reduction.type}{"tsne" or "umap" (default "tsne")}
 
 \item{point.size}{point size (default 0.7)}
+
+\item{show.legend}{whether to show the show.legend on the right side of the plot}
 }
 \value{
 ggplot2 object if return.plot=TRUE

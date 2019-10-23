@@ -8,20 +8,35 @@ body {
 text-align: justify}
 </style>
 
-Edited: October 21, 2019
+Edited: October 23, 2019
 
 # Introduction to the method
-ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that ILoReg was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene, which can for example be used for studying differential expression of *CD8A* and *CD8B* genes.  
+ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that ILoReg was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene.
 
-The figure below depicts the workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. [Seurat](https://satijalab.org/seurat/v3.1/pbmc3k_tutorial.html). 
+The figure below depicts the workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
 
 ![*Figure: Analysis workflows of ILoReg and a feature-selection based approach*](C:/Users/pajosm/Documents/vignette_ILoReg/figure.png)
 
 Unlike most scRNA-seq data analysis pipelines, ILoReg does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. The second and final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
 
+# Installation
+
+The latest version of ILoReg can be downloaded from GitHub using utilities from devtools R package.
+
+```{r}
+library(devtools)
+
+creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
+                            "~/../.ssh/id_rsa")
+devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
+                      credentials = creds)
+
+```
+
+
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of ILoReg's workflow and demonstrate it using a Peripheral Blood Mononuclear Cell (PBMC) dataset. The dataset (pbmc3k) can be downloaded from the public database of the 10X Genomics company: [10X Datasets](https://support.10xgenomics.com/single-cell-gene-expression/datasets). 
+In the following, we go through the different steps of ILoReg's workflow and demonstrate it using a Peripheral Blood Mononuclear Cell (PBMC) dataset. The dataset (pbmc3k) can be downloaded from the following link: [GitHub](https://support.10xgenomics.com/single-cell-gene-expression/datasets)
 
 
 ### Load and Normalize a Dataset
@@ -39,6 +54,7 @@ The only required input for ILoReg is a normalized gene expression matrix with g
 
 ```{r}
 library(ILoReg)
+library(cowplot)
 # Create iloreg object.
 iloreg_object <- CreateILoRegObject(normalized.data = data)
 ```
@@ -75,7 +91,7 @@ Next, we consider two quality control measures of ICP that can aid detecting iss
 
 First, the terminal projection accuracy that denotes the adjusted Rand index (ARI) between the clustering and its logistic regression projection at the final epoch (iteration) of ICP. Projection accuracy 1 would mean the classifier was able to predict the cluster identity of all cells correctly. Higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$. 
 
-Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower and smaller $k$ to higher the average pairwise ARI. The relation between $C$ and $r$ with the average pairwise ARI is not as unambiguous.
+Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower average pairwise ARI and smaller $k$ to higher average pairwise ARI. The relation of $C$ and $r$ with the average pairwise ARI is not as unambiguous as with the projection accuracy.
 
 ```{r}
 # Draw violin plots of the terminal clustering projection accuracy, the number of epochs and the average pairwise ARI.
@@ -105,7 +121,8 @@ tictoc::toc()
 
 ### Nonlinear dimensionality reduction
 
-Nonliner dimensionality reduction 
+To visualize the data in two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. 
+The input for this step is the $p$-dimensional PCA-rotated data matrix.
 
 ```{r}
 tictoc::tic()
@@ -117,62 +134,73 @@ tictoc::toc()
 
 ### Hierarchical clustering using Ward's agglomeration
 
+The $p$-dimensional PCA-rotated data matrix is clustered hierarchically using the Ward's method.
+
 ```{r}
 iloreg_object <- HierarchicalClustering(iloreg_object)
 ```
 
 
-### Estimating the optimal number of clusters (**optimal**)
-Calculate the silhouette information for K in 2:50 and visualize the average silhouette values. Moreover, the clustering acquired using K with the highest average silhouette is saved to *clustering.optimal* slot.
-```{r}
-iloreg_object <- CalculateSilhouetteInformation(iloreg_object,k.range = 2:30)
-p2 <- SilhouetteCurve(iloreg_object,return.plot = T)
-```
+### Gene expression visualization
 
-
-
-Visualize expression of CD8B gene across the cells - a CD8+ T cell marker.
+Visualize expression of CD3D (T cells), CD79A (B cells), CST3 (monocytes, dendritic cells, megakaryocytes), FCER1A (myeloid dendritic cells).
 ```{r}
 GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "umap")
 GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "tsne")
 
-
 ```
 
+### Selecting a clustering of size $K$
 
-Manually select K=20 clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
+Manually select $K=40$ clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
 ```{r}
 tictoc::tic()
-iloreg_object <- SelectKClusters(iloreg_object,K=30)
+iloreg_object <- SelectKClusters(iloreg_object,K=40)
 tictoc::toc()
 ```
 
+tSNE and UMAP transformations along with the optimal and manual clusterings.
+```{r FigUMAP_TSNE, echo=TRUE, fig.height=5, fig.width=12}
+# Use plot_grid function from the cowplot R package to combine to plots into one.
+plot_grid(ClusteringScatterPlot(iloreg_object,
+                                dim.reduction.type = "umap",
+                                return.plot = T,
+                                title = "UMAP",
+                                show.legend=FALSE),
+          ClusteringScatterPlot(iloreg_object,
+                                dim.reduction.type = "tsne",
+                                return.plot = T
+                                ,title="t-SNE",
+                                show.legend=FALSE)
+)
 
-Visualize tSNE and UMAP transformations along with the optimal and manual clusterings.
-```{r}
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "umap")
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
+```
+
+### Merging clusters
+
+Identifying rare cell types, e.g. megakaryocytes or plasmacytoid dendritic cells, might require selecting a high value of $K$, but this in turn can form clusters that are not meaningful. Therefore, ILoReg provides a simple function for combining clusters.
+```{r Fig0, echo=TRUE, fig.height=10, fig.width=12}
+# Visualization before merging
+tsne_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
+umap_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
+# Merge multiple sets of clusters
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(17,38),new.name = "m1")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(34,7,8),new.name = "m2")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(33,35),new.name = "m3")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(4,9),new.name = "m4")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(27,20,18,30,31,11),new.name = "m5")
+iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(22,36,16,12),new.name = "m6")
+# Visualization after merging
+tsne_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",return.plot = T,title = "After merging clusters",show.legend = FALSE)
+umap_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",return.plot = T,title = "After merging clusters",show.legend = FALSE)
+plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 ```
 
 
 
-Merge two clusters (4 and 9)
-```{r Fig0, echo=TRUE, fig.height=4, fig.width=6}
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne",return.plot = F,title = "Before merging clusters")
-iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(9,4))
-iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(21,29,12,11))
-iloreg_object <- MergeClusters(iloreg_object,clusters.to.merge = c(19,17,25))
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne",return.plot = F,title = "After merging clusters")
-```
+### Identification of gene markers
 
-Rename clusters to letters
-```{r}
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
-iloreg_object <- RenameAllClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
-ClusteringScatterPlot(iloreg_object,"manual",dim.reduction.type = "tsne")
-```
-
-Find gene markers for the manual clustering
+ILoReg provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
 ```{r}
 
 gene_markers <- FindAllGeneMarkers(iloreg_object,
@@ -188,8 +216,9 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
 
 ```
 
+### Selecting top genes based on log2 fold-change
 
-Select top 10 and top 1 genes based on log2 fold-change
+Select top 10 and top 1 genes based on log2 fold-change.
 ```{r}
 library(dplyr)
 
@@ -197,29 +226,121 @@ gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
 gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
 ```
 
+### Gene expression scatter plot
 
-```{r FigTop1Scatter, echo=TRUE, fig.height=12, fig.width=20}
+Visualize gene expression levels of cells over t-SNE or UMAP visualization.
+
+```{r FigTop1Scatter, echo=TRUE, fig.height=16, fig.width=20}
 GeneScatterPlot(iloreg_object,genes = unique(top1$gene),dim.reduction.type = "tsne",point.size = 0.7)
 ```
 
 
-
-Draw gene expression violin plots
-```{r FigVlnPlot, echo=TRUE, fig.height=5, fig.width=12}
-VlnPlot(iloreg_object,clustering.type = "manual",genes = c("CD3D","CST3","CD79A"))
+```{r FigTop1Scatter2, echo=TRUE, fig.height=16, fig.width=20}
+GeneScatterPlot(iloreg_object,genes = unique(top1$gene),dim.reduction.type = "umap",point.size = 0.7)
 ```
 
-Make gene marker heatmap for the manual clustering
+### Gene marker heatmap
+
+GeneHeatmap function enables visualizing gene markers in a heatmap, where cells and genes are grouped by the clustering.
+
 ```{r FigHM, echo=TRUE, fig.height=15, fig.width=15}
 GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10)
 
 ```
 
 
+### Visualization of gene expression grouped by clusters with violin plots
 
+Violin plots provide a nice way to visualize gene expression across clusters. 
+
+```{r FigVlnPlot, echo=TRUE, fig.height=5, fig.width=12}
+VlnPlot(iloreg_object,clustering.type = "manual",genes = c("CD3D","CD79A","CST3"),return.plot = F)
+```
+
+
+### Saving results
+
+Saving the results at the end of the workflow is recommended.
 
 ```{r}
 saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object_final.rds")
-
 ```
 
+
+
+
+# Additional functionality
+
+ILoReg provides additional functionality for performing tasks, which are commonly required in scRNA-seq data analysis.
+
+### Estimating optimal number of clusters
+
+Estimation of the optimal number of clusters is done by calculating the average silhouette value across the cells for clusterings with different $K$ values in a range (e.g. $[2,50]$). The clustering acquired using $K$ with the highest average silhouette is saved to *clustering.optimal* slot.
+
+```{r}
+iloreg_object <- CalculateSilhouetteInformation(iloreg_object,K.range = 2:50)
+SilhouetteCurve(iloreg_object,return.plot = F)
+```
+
+
+### Renaming clusters
+
+Rename all clusters at once with RenameAllClusters function.
+```{r FigRenaming, echo=TRUE, fig.height=10, fig.width=12}
+iloreg_object <- SelectKClusters(iloreg_object,K=20)
+tsne_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
+umap_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
+iloreg_object <- RenameAllClusters(iloreg_object,new.cluster.names = LETTERS[1:iloreg_object@K.manual])
+tsne_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
+umap_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
+plot_grid(tsne_before,tsne_after,umap_before,umap_after)
+```
+
+Rename one cluster with RenameCluster function.
+```{r FigRenaming2, echo=TRUE, fig.height=10, fig.width=12}
+iloreg_object <- SelectKClusters(iloreg_object,K=20)
+tsne_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
+umap_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
+iloreg_object <- RenameCluster(iloreg_object,old.cluster.name = 1,new.cluster.name = "A")
+tsne_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
+umap_after <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "umap",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
+plot_grid(tsne_before,tsne_after,umap_before,umap_after)
+```
+
+### Visualize with custom cluster labels
+
+```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6}
+# Select a clustering with K=20 clusters
+iloreg_object <- SelectKClusters(iloreg_object,K=20)
+# Generate a random annotation, in which cell has 90% change of having the same cluster as in ILoReg's clustering
+custom_annotation <- unlist(lapply(1:ncol(iloreg_object@normalized.data),function(x) {prob <- rep(0.1/(iloreg_object@K.manual-1),iloreg_object@K.manual) ; prob[levels(iloreg_object@clustering.manual)==iloreg_object@clustering.manual[x]] <- 0.9 ; sample(levels(iloreg_object@clustering.manual),size = 1,prob = prob)}))
+# Visualize the annotation
+AnnotationScatterPlot(iloreg_object,annotation = custom_annotation,return.plot = F,dim.reduction.type = "tsne",show.legend=FALSE)
+```
+
+### Dropout curve
+
+The dropout curve can be used to infer whether a gene is likely to be differentially expressed based on its abnormally high average expression level considering its dropout rate, i.e. fraction cells not expressing the gene. Genes that are differentially expressed in a population of cells are likely to be located above the expected curve [1].
+
+We investigate how four B cell marker genes are situated in the dropout curve. *CD79A* is expressed in all B cells, but the other three genes appear to be differentially expressed.
+
+```{r}
+GeneScatterPlot(iloreg_object,genes = c("CD79A","IGLL5","TCL1A","VPREB3"),dim.reduction.type = "tsne",point.size = 0.7)
+```
+
+From the dropout curve below we can indeed see, that *CD79A* is located close to of the center of the curve. *VPREB3* is slightly above the curve, whereas *TCL1A* and *IGLL5* are positioned clearly above the center of the curve.
+
+```{r}
+# Select a clustering with K=20 clusters
+iloreg_object <- SelectKClusters(iloreg_object,K=20)
+# Investigate dropout rates and average non-zero expression of a few potential differentially genes in B cells
+GeneDropoutRatePlot(iloreg_object,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),return.plot = F,use.clusters = c(17,13,12,2))
+```
+
+# References 
+
+1. Andrews, Tallulah S., and Martin Hemberg. "M3Drop: Dropout-based feature selection for scRNASeq." Bioinformatics (2018).
+
+# Contact information
+
+If you find bugs from ILoReg or have suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 

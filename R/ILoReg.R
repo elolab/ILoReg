@@ -971,6 +971,7 @@ setMethod("RenameCluster", "iloreg", function(iloreg.object,old.cluster.name,new
   clustering_old <- iloreg.object@clustering.manual
   clusters_old <- levels(clustering_old)
   clustering_old <- as.character(clustering_old)
+  names(clustering_old) <- colnames(iloreg.object@normalized.data)
 
   if (!(old.cluster.name %in% clusters_old))
   {
@@ -1929,7 +1930,7 @@ setGeneric("AnnotationScatterPlot", function(iloreg.object=NULL,
                                              annotation=c(),
                                              return.plot=FALSE,
                                              dim.reduction.type="",
-                                             point.size=0.7){
+                                             point.size=0.7,show.legend=FALSE){
   standardGeneric("AnnotationScatterPlot")
 })
 
@@ -1946,6 +1947,7 @@ setGeneric("AnnotationScatterPlot", function(iloreg.object=NULL,
 #' @param return.plot return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
+#' @param show.legend whether to show the show.legend on the right side of the plot
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords annotation custom visualization t-sne umap nonlinear dimensionality reduction
 #' @import ggplot2
@@ -1967,7 +1969,7 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
                                                       annotation,
                                                       return.plot,
                                                       dim.reduction.type,
-                                                      point.size)
+                                                      point.size,show.legend)
 {
 
   if (dim.reduction.type=="umap")
@@ -2003,6 +2005,13 @@ setMethod("AnnotationScatterPlot", "iloreg", function(iloreg.object,
     theme_classic() +
     annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(annotation)) +
     guides(colour = guide_legend(override.aes = list(size=2)))
+
+
+  if (!show.legend)
+  {
+    p <- p + theme(legend.position = "none")
+  }
+
 
   if (return.plot)
   {
