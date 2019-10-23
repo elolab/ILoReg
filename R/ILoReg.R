@@ -1816,7 +1816,6 @@ setMethod("VlnPlot", "iloreg", function(iloreg.object,
   plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=Cluster, y=Expression, fill=Cluster))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none"))
 
   p <- plot_grid(plotlist = plotlist)
-  print(p)
 
   if (return.plot)
   {
