@@ -1,14 +1,14 @@
 ---
-title: "ILoReg"
+title: "ILoReg package manual"
 author: "Johannes Smolander"
 date: "`r Sys.Date()`"
-fig_width: 10 
-fig_height: 6.67
-output: rmarkdown::html_vignette
+output: 
+  BiocStyle::html_document:
+    toc: true
 vignette: >
-  %\VignetteIndexEntry{ILoReg}
+  %\VignetteIndexEntry{ILoReg package manual}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEncoding[utf8]{inputenc}
 ---
 
 <style>
@@ -17,27 +17,25 @@ text-align: justify}
 </style>
 
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
+```{r knitr-options, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
 ```
 
 
 # Introduction to the method
-ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that ILoReg was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene.
+`ILoReg` (abbr. for **I**terative **Lo**gistic **Reg**ression) is a tool for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, `ILoReg` can identify subpopulations that are differentiable by only a single gene.
 
-The figure below depicts the workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
+The figure below depicts the workflows of `ILoReg` and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
 
-![*Figure: Analysis workflows of ILoReg and a feature-selection based approach*](figure.png){width=100%}
+![*Figure: Analysis workflows of `ILoReg` and a feature-selection based approach*](figure.png){width=100%}
 
-Unlike most scRNA-seq data analysis pipelines, ILoReg does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. The second and final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
+Unlike most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. The second and final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
 
 
 # Installation
 
-The latest version of ILoReg can be downloaded from GitHub using utilities from devtools R package.
+The latest version of `ILoReg` can be downloaded from GitHub using utilities from devtools R package.
 
 
 ```{r eval = FALSE}
@@ -52,12 +50,12 @@ devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
 
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of ILoReg's workflow and demonstrate it using a Peripheral Blood Mononuclear Cell (PBMC) dataset. The dataset (pbmc3k) can be downloaded from the following link: [GitHub](https://support.10xgenomics.com/single-cell-gene-expression/datasets)
+In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a Peripheral Blood Mononuclear Cell (PBMC) dataset. The dataset (pbmc3k) can be downloaded from the following link: [GitHub](https://support.10xgenomics.com/single-cell-gene-expression/datasets)
 
 
 ### Load and Normalize a Dataset
 
-To load and normalize the dataset, we use the Read10X and LogNormalize functions from Seurat R package. Currently, ILoReg R package does not have its own functions for normalizing scRNA-seq data. Therefore, the user must rely on other R packages to  perform this step.
+To load and normalize the dataset, we use the Read10X and LogNormalize functions from Seurat R package. Currently, `ILoReg` R package does not have its own functions for normalizing scRNA-seq data. Therefore, the user must rely on other R packages to  perform this step.
 
 ```{r}
 data <- Seurat::LogNormalize(Seurat::Read10X("D:/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
@@ -66,7 +64,7 @@ data <- Seurat::LogNormalize(Seurat::Read10X("D:/10x_data/pbmc3k/filtered_gene_b
 
 ### Setup the iloreg R Object
 
-The only required input for ILoReg is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. **Please note that the method has been designed to work with sparse data, i.e. with lots of zero values. If for example the features of your dataset have been standardized, the method is likely to work much slower and require more RAM.**
+The only required input for `ILoReg` is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. **Please note that the method has been designed to work with sparse data, i.e. with lots of zero values. If for example the features of your dataset have been standardized, the method is likely to work much slower and require more RAM.**
 
 
 ```{r}
@@ -117,7 +115,7 @@ First, the terminal projection accuracy that denotes the adjusted Rand index (AR
 
 Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower average pairwise ARI and smaller $k$ to higher average pairwise ARI. The relation of $C$ and $r$ with the average pairwise ARI is not as unambiguous as with the projection accuracy.
 
-```{r, fig.height=4, fig.width=9, out.width = '70%',fig.align = "center"}
+```{r, fig.height=4, fig.width=9, out.width = '100%',fig.align = "center"}
 # Draw violin plots of the terminal clustering projection accuracy, the number of epochs and the average pairwise ARI.
 # Each data point represents a ICP run.
 VisualizeQC(iloreg_object,return.plot = F)
@@ -138,7 +136,7 @@ tictoc::toc()
 
 PCA transformation requires the user to select the number of principal components, for which we selected default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects $p$.
 
-```{r, fig.height=5, fig.width=7, out.width = '70%',fig.align = "center"}
+```{r, fig.height=5, fig.width=7, out.width = '100%',fig.align = "center"}
 tictoc::tic()
 PCAElbowPlot(iloreg_object)
 tictoc::toc()
@@ -207,7 +205,7 @@ plot_grid(ClusteringScatterPlot(iloreg_object,
 
 ### Merging clusters
 
-Identifying rare cell types, e.g. megakaryocytes or plasmacytoid dendritic cells, might require selecting a high value of $K$, but this in turn can form clusters that are not meaningful. Therefore, ILoReg provides a simple function for combining clusters.
+Identifying rare cell types, e.g. megakaryocytes or plasmacytoid dendritic cells, might require selecting a high value of $K$, but this in turn can form clusters that are not meaningful. Therefore, `ILoReg` provides a simple function for combining clusters.
 ```{r Fig0, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%'}
 # Visualization before merging
 tsne_before <- ClusteringScatterPlot(iloreg_object,dim.reduction.type = "tsne",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
@@ -228,7 +226,7 @@ plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 
 ### Identification of gene markers
 
-ILoReg provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
+`ILoReg` provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
 ```{r}
 
 gene_markers <- FindAllGeneMarkers(iloreg_object,
@@ -303,13 +301,13 @@ saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object_final.rds")
 
 # Additional functionality
 
-ILoReg provides additional functionality for performing tasks, which are commonly required in scRNA-seq data analysis.
+`ILoReg` provides additional functionality for performing tasks, which are commonly required in scRNA-seq data analysis.
 
 ### Estimating optimal number of clusters
 
 Estimation of the optimal number of clusters is done by calculating the average silhouette value across the cells for clusterings with different $K$ values in a range (e.g. $[2,50]$). The clustering acquired using $K$ with the highest average silhouette is saved to *clustering.optimal* slot.
 
-```{r, fig.height=5, fig.width=7, out.width = '70%',fig.align = "center"}
+```{r, fig.height=5, fig.width=7, out.width = '100%',fig.align = "center"}
 iloreg_object <- CalculateSilhouetteInformation(iloreg_object,K.range = 2:50)
 SilhouetteCurve(iloreg_object,return.plot = F)
 ```
@@ -343,7 +341,7 @@ plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 
 ### Visualize with custom cluster labels
 
-```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '50%',fig.align = "center"}
+```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center"}
 # Select a clustering with K=20 clusters
 iloreg_object <- SelectKClusters(iloreg_object,K=20)
 # Generate a random annotation, in which cell has 90% change of having the same cluster as in ILoReg's clustering
@@ -368,7 +366,7 @@ GeneScatterPlot(iloreg_object,genes = c("CD79A","IGLL5","TCL1A","VPREB3"),dim.re
 
 From the dropout curve below we can indeed see, that *CD79A* is located close to of the center of the curve. *VPREB3* is slightly above the curve, whereas *TCL1A* and *IGLL5* are positioned clearly above the center of the curve.
 
-```{r, echo=TRUE, fig.height=6, fig.width=8, out.width = '70%',fig.align = "center"}
+```{r, echo=TRUE, fig.height=6, fig.width=8, out.width = '100%',fig.align = "center"}
 # Select a clustering with K=20 clusters
 iloreg_object <- SelectKClusters(iloreg_object,K=20)
 # Investigate dropout rates and average non-zero expression of a few potential differentially genes in B cells
@@ -384,5 +382,5 @@ GeneDropoutRatePlot(iloreg_object,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),re
 
 # Contact information
 
-If you find bugs from ILoReg or have suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you find bugs from `ILoReg` or have suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
 

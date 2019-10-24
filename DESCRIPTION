@@ -1,12 +1,18 @@
 Package: ILoReg
 Type: Package
-Title: ILoReg: high-precision cell population identification from single-cell RNA-seq data
+Title: ILoReg: high-precision cell population identification from single-cell RNA-Seq data
 Version: 0.1.0
 Author: Johannes Smolander
-Maintainer: Johannes Smolander <pajosm@utu.fi>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Maintainer: Johannes Smolander <johannes.smolander@gmail.com>
+Authors@R: c(person("Johannes", "Smolander",
+             email = "johannes.smolander@gmail.com",
+             role=c("cre", "aut")),
+             person("Sini", "Junttila",
+             role=c("ctb")),
+             person("Mikko S", "Venäläinen",
+             role=c("ctb")),
+             person("Laura L", "Elo",role=c("aut")))
+Description: A tool for high-precision cell type identification from single-cell RNA-Seq data.
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
