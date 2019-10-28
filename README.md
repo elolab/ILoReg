@@ -17,7 +17,7 @@ The figure below depicts the workflows of ILoReg and a feature selection -based 
 
 Unlike most scRNA-seq data analysis pipelines, ILoReg does not reduce the dimensionality of the gene expression matrix by feature selection. 
 Instead, it performs probabilistic feature extraction, in which the **Iterative Clustering Projection** (**ICP**) clustering algorithm is run *L* times, which yields 
-*L* *k*-dimensional probability matrices that represent the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* 
+*L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* 
 that maximizes the adjusted Rand index (ARI) between the clustering and its projection by L1-regularized logistic regression. 
 The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. 
 The second and final clustering step is performed using hierarhical clustering using the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) 
