@@ -112,7 +112,6 @@ setGeneric("RunParallelICP", function(iloreg.object=NULL,k=15,d=0.3,L=200,r=5,C=
 #' @description
 #' Enables running L ICP runs in parallel.
 #'
-#' @details
 #' @param iloreg.object object of class 'iloreg'
 #' @param k A positive integer greater or equal to 2, which denotes the number of clusters in iterative logistic regression. (default 15)
 #' @param d A numeric greater than 0 and smaller than 1 that determines how many cells 'n' are down- or oversampled from each cluster into the training data. (d in n=N/k*d), where N is the total number of cells, k is the number of clusters in ICP. (default 0.3)
@@ -1322,10 +1321,11 @@ setGeneric("FindAllGeneMarkers", function(iloreg.object=NULL,clustering.type="",
 #'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
-#' library(dplyr)
-#' ## Select top 10 genes per cluster by log2 fold-change
-#' gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
-#' gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
+#' ## Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
+#'top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",bottom = FALSE)
+#'top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",bottom = FALSE)
+#'top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",bottom = TRUE)
+#'top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",bottom = TRUE)
 
 
 setMethod("FindAllGeneMarkers", "iloreg", function(iloreg.object,
@@ -1558,10 +1558,6 @@ setGeneric("FindGeneMarkers", function(iloreg.object=NULL,
 #'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
-#' library(dplyr)
-#' ## Select top 10 genes per cluster by log2 fold-change
-#' gene_markers  %>% top_n(10, log2FC) -> top10
-#' gene_markers  %>% top_n(1, log2FC) -> top1
 setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
                                                 clusters.1,
                                                 clusters.2,
@@ -1646,7 +1642,8 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   # Skip if the number of cells in the test or the reference set is lower than min.cells.group
   if (ncol(data_cluster) < min.cells.group | ncol(data_other) < min.cells.group)
   {
-    next
+    cat("-----------------------------------\n")
+    return(NULL)
   }
 
   # min.pct filter
@@ -1663,7 +1660,7 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   if (nrow(data_cluster)==0)
   {
     cat("-----------------------------------\n")
-    next
+    return(NULL)
   }
 
   # min.diff.pct filter
@@ -1682,7 +1679,7 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   if (nrow(data_cluster)==0)
   {
     cat("-----------------------------------\n")
-    next
+    return(NULL)
   }
 
   # logfc.threshold filter
@@ -1701,7 +1698,7 @@ setMethod("FindGeneMarkers", "iloreg", function(iloreg.object,
   if (nrow(data_cluster)==0)
   {
     cat("-----------------------------------\n")
-    next
+    return(NULL)
   }
 
   # Run DE test
@@ -1877,12 +1874,13 @@ setGeneric("GeneHeatmap", function(iloreg.object=NULL,
 #'                                  min.cells.group = 3,
 #'                                 return.thresh = 0.01,
 #'                                 only.pos = FALSE,max.cells.per.cluster = NULL)
-#' library(dplyr)
-#' ## Select top 10 genes per cluster by log2 fold-change
-#' gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
-#' gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
+#' ## Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
+#'top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",bottom = FALSE)
+#'top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",bottom = FALSE)
+#'top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",bottom = TRUE)
+#'top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",bottom = TRUE)
 #'
-#' GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10)
+#' GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10_log2FC)
 setMethod("GeneHeatmap", "iloreg", function(iloreg.object,
                                             clustering.type,
                                             gene.marker.data.frame)

@@ -67,10 +67,11 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
                                  min.cells.group = 3,
                                 return.thresh = 0.01,
                                 only.pos = FALSE,max.cells.per.cluster = NULL)
-library(dplyr)
-## Select top 10 genes per cluster by log2 fold-change
-gene_markers \%>\% group_by(cluster) \%>\% top_n(10, log2FC) -> top10
-gene_markers \%>\% group_by(cluster) \%>\% top_n(1, log2FC) -> top1
+## Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
+top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",bottom = FALSE)
+top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",bottom = FALSE)
+top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",bottom = TRUE)
+top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",bottom = TRUE)
 }
 \keyword{DE}
 \keyword{analysis}

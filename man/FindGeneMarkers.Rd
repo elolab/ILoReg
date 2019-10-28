@@ -71,10 +71,6 @@ gene_markers_1_vs_2 <- FindGeneMarkers(iloreg_object,clusters.1 = c(1),clusters.
                                  min.cells.group = 3,
                                 return.thresh = 0.01,
                                 only.pos = FALSE,max.cells.per.cluster = NULL)
-library(dplyr)
-## Select top 10 genes per cluster by log2 fold-change
-gene_markers  \%>\% top_n(10, log2FC) -> top10
-gene_markers  \%>\% top_n(1, log2FC) -> top1
 }
 \keyword{DE}
 \keyword{analysis}

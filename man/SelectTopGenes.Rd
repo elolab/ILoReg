@@ -8,22 +8,19 @@ SelectTopGenes(gene.markers = NULL, top.N = 10,
   criterion.type = "log2FC", bottom = FALSE)
 }
 \arguments{
-\item{gene.markers}{a character vector of the genes to visualize over the dropout rate curve}
+\item{gene.markers}{a data frame of the gene markers found by FindAllGeneMarkers function}
 
-\item{top.N}{return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})}
+\item{top.N}{how many top or bottom genes to select (default 10)}
 
-\item{criterion.type}{use data from these clusters only}
+\item{criterion.type}{which criterion to use for selecting the genes (default "log2FC")}
 
-\item{bottom}{"manual" or "optimal". "manual" refers to the clustering formed using the "SelectKClusters" function and "optimal" to the clustering using the "CalculateSilhouetteInformation" function. (default "manual")}
+\item{bottom}{whether to select bottom instead of top N genes (default FALSE)}
 }
 \value{
 data frame
 }
 \description{
-The GeneDropoutRatePlot function enables visualizion of dropout rates (fraction of cells expressing a gene) against
-the average non-zero expression values. This function can aid the user to determinine if a gene is differentially expressed or not,
-since differentially expressed genes are likely to be above the expected curve. Cells can be filtered based on clustering before
-calculating the values.
+The SelectTopGenes function enables selecting top or bottom N genes based on a criterion (e.g. log2FC or adj.p.value).
 }
 \examples{
 ## Load 10X Chromium data and LogNormalized them.
@@ -37,12 +34,24 @@ iloreg_object <- RunPCA(iloreg_object,p = 50,scale = FALSE)
 PCAElbowPlot(iloreg_object,return.plot=FALSE)
 iloreg_object <- HierarchicalClustering(iloreg_object)
 iloreg_object <- SelectKClusters(iloreg_object,K=15)
-GeneDropoutRatePlot(iloreg_object,genes = c("CD79A","TCL1A","IGLL5","VPREB3"),use.clusters = c(24,15,14,2),clustering.type = "manual")
+gene_markers <- FindAllGeneMarkers(iloreg_object,
+                                  clustering.type = "manual",
+                                  test = "wilcox",
+                                  logfc.threshold = 0.25,
+                                  min.pct = 0.1,
+                                 min.diff.pct = NULL,
+                                 pseudocount.use = 1,
+                                 min.cells.group = 3,
+                                return.thresh = 0.01,
+                                only.pos = FALSE,max.cells.per.cluster = NULL)
+## Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
+top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",bottom = FALSE)
+top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",bottom = FALSE)
+top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",bottom = TRUE)
+top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",bottom = TRUE)
 }
-\keyword{average}
-\keyword{curve}
-\keyword{dropout}
-\keyword{expression}
-\keyword{gene}
-\keyword{non-zero}
-\keyword{rate}
+\keyword{N}
+\keyword{bottom}
+\keyword{genes}
+\keyword{select}
+\keyword{top}
