@@ -38,6 +38,10 @@ devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
 
 ```
 
+## Example
+
+Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, where a Peripheral Blood Mononuclear Cell (PBMC) dataset was analyzed using ILoReg.
+
 ## Contact information
 
 If you find bugs from ILoReg or have suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
