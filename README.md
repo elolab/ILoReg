@@ -2,6 +2,8 @@
 
 ## Introduction
 
+
+
 ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. 
 High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. 
 In our study ([Smolander J. et al.](https://gitlab.utu.fi/pajosm/iloreg)) we showed that ILoReg was able to identify, by both unsupervised clustering and visually, 
