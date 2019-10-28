@@ -45,7 +45,7 @@ To load and normalize the dataset, we use the Read10X and LogNormalize functions
 
 
 ```{r}
-data <- Seurat::LogNormalize(Seurat::Read10X("D:/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
+data <- Seurat::LogNormalize(Seurat::Read10X("~/../Downloads/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
 ```
 
 ### Setup the iloreg R Object
@@ -78,7 +78,7 @@ In the following, we give a brief summary of the parameters.
 ```{r}
 # Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 tictoc::tic()
-iloreg_object <- RunParallelICP(iloreg_object,threads = 3,L = 200,k = 15,C = 0.3,r = 5,d = 0.3,type = "L1",seed = 1)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 12,L = 200,k = 15,C = 0.3,r = 5,d = 0.3,type = "L1",seed = 1)
 tictoc::toc()
 # At this point saving the results is recommended.
 saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object.rds")
@@ -218,25 +218,27 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
 
 ### Selecting top genes based on log2 fold-change
 
-Select top 10 and top 1 genes based on log2 fold-change.
+Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
 ```{r}
-library(dplyr)
+top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",bottom = FALSE)
+top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",bottom = FALSE)
+top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",bottom = TRUE)
+top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",bottom = TRUE)
 
-gene_markers %>% group_by(cluster) %>% top_n(10, log2FC) -> top10
-gene_markers %>% group_by(cluster) %>% top_n(1, log2FC) -> top1
 ```
+
 
 ### Gene expression scatter plot
 
 Visualize gene expression levels of cells over t-SNE or UMAP visualization.
 
 ```{r FigTop1Scatter, echo=TRUE, fig.height=16, fig.width=20}
-GeneScatterPlot(iloreg_object,genes = unique(top1$gene),dim.reduction.type = "tsne",point.size = 0.7)
+GeneScatterPlot(iloreg_object,genes = unique(top1_log2FC$gene),dim.reduction.type = "tsne",point.size = 0.7)
 ```
 
 
 ```{r FigTop1Scatter2, echo=TRUE, fig.height=16, fig.width=20}
-GeneScatterPlot(iloreg_object,genes = unique(top1$gene),dim.reduction.type = "umap",point.size = 0.7)
+GeneScatterPlot(iloreg_object,genes = unique(top1_log2FC$gene),dim.reduction.type = "umap",point.size = 0.7)
 ```
 
 ### Gene marker heatmap
