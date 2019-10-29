@@ -10,7 +10,7 @@ In our study ([Smolander J. et al.](https://gitlab.utu.fi/pajosm/iloreg)) we sho
 immune and pancreas cell types that other popular scRNA-seq data analysis pipelines were not able to find. 
 Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene.
 
-The figure below depicts the workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
+The figure below depicts workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
 
 ![*Figure: Analysis workflows of ILoReg and a feature-selection based approach*](vignettes/figure.png)
 
