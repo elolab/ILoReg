@@ -991,7 +991,7 @@ setMethod("RenameCluster", "iloreg", function(iloreg.object,old.cluster.name,new
 
 
 
-setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=FALSE,dim.reduction.type="tsne",point.size=0.7,title=""){
+setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=FALSE,dim.reduction.type="tsne",point.size=0.7,title="",plot.expressing.cells.last=FALSE){
   standardGeneric("GeneScatterPlot")
 })
 
@@ -1009,6 +1009,7 @@ setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=F
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
 #' @param title text to write above the plot
+#' @param plot.expressing.cells.last whether to plot the expressing genes last to make the points more visible
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords gene scatter plot visualization
 #' @import ggplot2
@@ -1031,7 +1032,7 @@ setGeneric("GeneScatterPlot", function(iloreg.object=NULL,genes="",return.plot=F
 #' iloreg_object <- RunUMAP(iloreg_object,perplexity=30)
 #' GeneScatterPlot(iloreg_object,c("CCR7","CD3D","S100A4"),dim.reduction.type = "umap",point.size=0.7)
 
-setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,dim.reduction.type,point.size,title){
+setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,dim.reduction.type,point.size,title,plot.expressing.cells.last){
 
   if (dim.reduction.type=="umap")
   {
@@ -1060,8 +1061,13 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
     df$group <- color.by
     colnames(df) <- c("dim1","dim2","group")
 
-    if (title!="")
+    if (title=="")
     {
+
+      if (plot.expressing.cells.last)
+      {
+        df <- df[order(df$group,decreasing = F),]
+      }
       p<-ggplot(df, aes(x=dim1, y=dim2)) +
         geom_point(size=point.size,aes(color=group)) +
         scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
@@ -1070,6 +1076,7 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
         ylab(ylab) +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
 
     } else {
       p<-ggplot(df, aes(x=dim1, y=dim2)) +
@@ -1106,7 +1113,12 @@ setMethod("GeneScatterPlot", "iloreg", function(iloreg.object,genes,return.plot,
       df$group <- color.by
       colnames(df) <- c("dim1","dim2","group")
 
-      if (title!="") {
+      if (plot.expressing.cells.last)
+      {
+        df <- df[order(df$group,decreasing = F),]
+      }
+
+      if (title=="") {
         p<-ggplot(df, aes(x=dim1, y=dim2)) +
           geom_point(size=point.size,aes(color=group)) +
           scale_colour_gradient2(low = muted("red"), mid = "lightgrey",

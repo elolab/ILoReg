@@ -7,7 +7,7 @@
 \usage{
 \S4method{GeneScatterPlot}{iloreg}(iloreg.object = NULL, genes = "",
   return.plot = FALSE, dim.reduction.type = "tsne", point.size = 0.7,
-  title = "")
+  title = "", plot.expressing.cells.last = FALSE)
 }
 \arguments{
 \item{iloreg.object}{object of class 'iloreg'}
@@ -21,6 +21,8 @@
 \item{point.size}{point size (default 0.7)}
 
 \item{title}{text to write above the plot}
+
+\item{plot.expressing.cells.last}{whether to plot the expressing genes last to make the points more visible}
 }
 \value{
 ggplot2 object if return.plot=TRUE
