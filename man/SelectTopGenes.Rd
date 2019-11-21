@@ -4,8 +4,12 @@
 \alias{SelectTopGenes}
 \title{Select top or bottom N genes based on a selection criterion}
 \usage{
-SelectTopGenes(gene.markers = NULL, top.N = 10,
-  criterion.type = "log2FC", bottom = FALSE)
+SelectTopGenes(
+  gene.markers = NULL,
+  top.N = 10,
+  criterion.type = "log2FC",
+  bottom = FALSE
+)
 }
 \arguments{
 \item{gene.markers}{a data frame of the gene markers found by FindAllGeneMarkers function}

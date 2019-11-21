@@ -4,8 +4,15 @@
 \alias{RunICP}
 \title{Iterative logistic regression (ILoReg) clustering}
 \usage{
-RunICP(normalized.data = NULL, k = 15, d = 0.3, r = 5, C = 5,
-  type = "L1", max.number.of.iterations = 100)
+RunICP(
+  normalized.data = NULL,
+  k = 15,
+  d = 0.3,
+  r = 5,
+  C = 5,
+  type = "L1",
+  max.number.of.iterations = 100
+)
 }
 \arguments{
 \item{normalized.data}{A sparse matrix (dgCMatrix) containing gene expression with genes in rows and cells in columns. (default NULL)}

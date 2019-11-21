@@ -45,7 +45,7 @@ To load and normalize the dataset, we use the Read10X and LogNormalize functions
 
 
 ```{r}
-data <- Seurat::LogNormalize(Seurat::Read10X("~/../Downloads/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
+data <- Seurat::LogNormalize(Seurat::Read10X("D:/10x_data/pbmc3k/filtered_gene_bc_matrices_GRCh37.p13/hg19/"),verbose = FALSE)
 ```
 
 ### Setup the iloreg R Object
@@ -78,7 +78,7 @@ In the following, we give a brief summary of the parameters.
 ```{r}
 # Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 tictoc::tic()
-iloreg_object <- RunParallelICP(iloreg_object,threads = 12,L = 200,k = 15,C = 0.3,r = 5,d = 0.3,type = "L1",seed = 1)
+iloreg_object <- RunParallelICP(iloreg_object,threads = 3,L = 200,k = 15,C = 0.3,r = 5,d = 0.3,type = "L1",seed = 1)
 tictoc::toc()
 # At this point saving the results is recommended.
 saveRDS(iloreg_object,file = "~/pbmc3k_iloreg_object.rds")
@@ -145,8 +145,8 @@ iloreg_object <- HierarchicalClustering(iloreg_object)
 
 Visualize expression of CD3D (T cells), CD79A (B cells), CST3 (monocytes, dendritic cells, megakaryocytes), FCER1A (myeloid dendritic cells).
 ```{r}
-GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "umap")
-GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "tsne")
+GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCGR3A"),dim.reduction.type = "umap")
+GeneScatterPlot(iloreg_object,c("CD3D","CD79A","CST3","FCGR3A"),dim.reduction.type = "tsne")
 
 ```
 
@@ -212,7 +212,7 @@ gene_markers <- FindAllGeneMarkers(iloreg_object,
                                    pseudocount.use = 1,
                                    min.cells.group = 3,
                                    return.thresh = 0.01,
-                                   only.pos = FALSE,max.cells.per.cluster = NULL)
+                                   only.pos = TRUE,max.cells.per.cluster = NULL)
 
 ```
 
@@ -334,10 +334,19 @@ From the dropout curve below we can indeed see, that *CD79A* is located close to
 
 ```{r}
 # Select a clustering with K=20 clusters
-iloreg_object <- SelectKClusters(iloreg_object,K=20)
+iloreg_object <- SelectKClusters(iloreg_object,K=30)
 # Investigate dropout rates and average non-zero expression of a few potential differentially genes in B cells
-GeneDropoutRatePlot(iloreg_object,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),return.plot = F,use.clusters = c(17,13,12,2))
+GeneDropoutRatePlot(iloreg_object,genes = c("S100A12","CD14"),return.plot = F,use.clusters = c(19,17,25,11,21,29,12))
 ```
+
+
+### Find markers betweent two arbitrary sets of clusters
+
+```{r}
+gene_markers_ <- FindGeneMarkers(iloreg_object,c(30,22,93),c(1),clustering.type = "manual",only.pos = T)
+```
+
+
 
 # References 
 

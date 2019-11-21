@@ -1,22 +1,34 @@
 Package: ILoReg
 Type: Package
-Title: ILoReg: high-precision cell population identification from single-cell RNA-Seq data
-Version: 0.1.0
-Author: Johannes Smolander
+Title: ILoReg: high-precision cell population identification from scRNA-Seq data
+Version: 0.99.0
 Maintainer: Johannes Smolander <johannes.smolander@gmail.com>
+Description: ILoReg is a tool for identification of cell populations with subtle transcriptomic differences from scRNA-Seq data.
 Authors@R: c(person("Johannes", "Smolander",
              email = "johannes.smolander@gmail.com",
              role=c("cre", "aut")),
              person("Sini", "Junttila",
-             role=c("ctb")),
+             role=c("aut")),
              person("Mikko S", "Venäläinen",
-             role=c("ctb")),
-             person("Laura L", "Elo",role=c("aut")))
-Description: A tool for high-precision cell type identification from single-cell RNA-Seq data.
+             role=c("aut")),
+             person("Laura L", "Elo",
+             role=c("aut")))
+License: GPL-3
+Imports: Matrix, parallel, doParallel, foreach, tictoc, 
+          aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
+          umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
+          DescTools, plyr, scales, pheatmap, reshape2, dplyr
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 6.1.1
+LazyData: false
+RoxygenNote: 7.0.0
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    Seurat
 VignetteBuilder: knitr
+biocViews: SingleCell, Software, Clustering, DimensionReduction, 
+            LogisticRegression, RNASeq, Visualization, Transcriptomics, 
+            DataRepresentation, DifferentialExpression, Transcription
+NeedsCompilation: no
+URL: https://gitlab.utu.fi/pajosm/iloreg
+BugReports: https://gitlab.utu.fi/pajosm/iloreg

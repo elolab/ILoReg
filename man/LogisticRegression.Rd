@@ -4,10 +4,15 @@
 \alias{LogisticRegression}
 \title{Classification using logistic regression from LiblineaR R package}
 \usage{
-LogisticRegression(training.sparse.matrix = NULL,
-  training.ident = NULL, print.info = TRUE, cost = 0.3,
-  type = "L1", test.sparse.matrix = NULL,
-  downsampling.fraction = 0.3)
+LogisticRegression(
+  training.sparse.matrix = NULL,
+  training.ident = NULL,
+  print.info = TRUE,
+  cost = 0.3,
+  type = "L1",
+  test.sparse.matrix = NULL,
+  downsampling.fraction = 0.3
+)
 }
 \arguments{
 \item{training.sparse.matrix}{A sparse matrix (dgCMatrix) containing training sample's gene expression data with genes in rows and cells in columns. (default NULL)}

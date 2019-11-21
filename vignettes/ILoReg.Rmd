@@ -44,7 +44,7 @@ library(devtools)
 creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
                             "~/../.ssh/id_rsa")
 devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
-                      credentials = creds,build_vignettes = TRUE)
+                      credentials = creds)
 ```
 
 
@@ -277,6 +277,29 @@ GeneHeatmap function enables visualizing gene markers in a heatmap, where cells 
 GeneHeatmap(iloreg_object,clustering.type = "manual",gene.marker.data.frame = top10)
 
 ```
+
+
+### Identification of differentially expressed genes between two arbitrary sets of clusters
+
+```{r}
+gene_markers_IGLL5_positive_b_cell_VS_negative <- FindGeneMarkers(iloreg_object,
+                                                                  clusters.1 = c(29,15,14),
+                                                                  clusters.2 = c(26,2),
+                                                                  logfc.threshold = 0,
+                                                                  min.pct = 0,
+                                                                  return.thresh = 0.01,
+                                                                  only.pos = TRUE)
+
+gene_markers_TCL1A_positive_b_cell_VS_negative <- FindGeneMarkers(iloreg_object,
+                                                                  clusters.1 = c(26,29,15),
+                                                                  clusters.2 = c(14,2),
+                                                                  logfc.threshold = 0,
+                                                                  min.pct = 0,
+                                                                  return.thresh = 0.01,
+                                                                  only.pos = TRUE)
+
+```
+
 
 
 ### Visualization of gene expression grouped by clusters with violin plots

@@ -276,7 +276,7 @@ setGeneric("VisualizeQC", function(iloreg.object=NULL,return.plot=FALSE){
 #' @return ggplot2 object if return.plot=TRUE
 #' @keywords terminal projection accuracy average pairwise ARI quality control QC
 #' @import ggplot2
-#' @import cowplot
+#' @importFrom cowplot plot_grid
 #' @importFrom aricode ARI
 #' @export
 #' @examples
