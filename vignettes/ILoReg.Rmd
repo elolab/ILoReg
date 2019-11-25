@@ -92,7 +92,7 @@ In the following, we give a brief summary of the parameters.
 ```{r eval = FALSE}
 # Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 set.seed(1)
-sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 200, r = 5, C = 0.3, 
+sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 50, r = 5, C = 0.3, 
                       regularization = "L1",
                       threads = 0)
 # At this point saving the results is recommended.
@@ -320,7 +320,7 @@ saveRDS(sce,file = "~/pbmc3k_sce_final.rds")
 Estimation of the optimal number of clusters is done by calculating the average silhouette value across the cells for clusterings with different $K$ values in a range (e.g. $[2,50]$). The clustering acquired using $K$ with the highest average silhouette is saved to *clustering.optimal* slot.
 
 ```{r, fig.height=5, fig.width=7, out.width = '100%',fig.align = "center"}
-sce <- CalculateSilhouetteInformation(sce,K.range = 2:50)
+sce <- CalculateSilhouetteInformation(sce,K.start = 2,K.end = 50)
 SilhouetteCurve(sce,return.plot = F)
 ```
 
@@ -382,7 +382,7 @@ From the dropout curve below we can indeed see, that *CD79A* is located close to
 # Select a clustering with K=20 clusters
 sce <- SelectKClusters(sce,K=20)
 # Investigate dropout rates and average non-zero expression of a few potential differentially genes in B cells
-GeneDropoutRatePlot(sce,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),return.plot = F,use.clusters = c(17,13,12,2))
+GeneDropoutRatePlot(sce,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),return.plot = F,clusters = c(17,11,16,19))
 ```
 
 

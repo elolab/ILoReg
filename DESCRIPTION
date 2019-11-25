@@ -17,7 +17,8 @@ License: GPL-3
 Imports: Matrix, parallel, doParallel, foreach, tictoc, 
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
-          DescTools, plyr, scales, pheatmap, reshape2, dplyr
+          DescTools, plyr, scales, pheatmap, reshape2, dplyr, doRNG, SingleCellExperiment,
+          SummarizedExperiment, S4Vectors
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 7.0.0

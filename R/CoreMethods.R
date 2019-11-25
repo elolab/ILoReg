@@ -826,7 +826,7 @@ CalculateSilhouetteInformation.SingleCellExperiment <-
     metadata(object)$iloreg$clustering.optimal <- clustering
     metadata(object)$iloreg$K.optimal <- k_optimal
 
-    names(sis) <- K.range
+    names(sis) <- seq(K.start,K.end,1)
     metadata(object)$iloreg$silhouette.information <- sis
 
     return(object)
