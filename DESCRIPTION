@@ -19,7 +19,7 @@ Imports: Matrix, parallel, doParallel, foreach, tictoc,
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
           DescTools, plyr, scales, pheatmap, reshape2, dplyr
 Encoding: UTF-8
-LazyData: false
+LazyData: TRUE
 RoxygenNote: 7.0.0
 Suggests: 
     knitr,

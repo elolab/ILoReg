@@ -1,198 +1,311 @@
+#' 1000 cells downsampled from the pbmc3k dataset.
+#'
+#' The preprocessing was done using Cell Ranger v2.2.0 and
+#' the GRCh37.p13 human reference genome.
+#'
+#' @docType data
+#'
+#' @usage data(pbmc3k_1000)
+#'
+#' @format raw_data and data, both dgCMatrix objects
+#'
+#' @keywords datasets
+#'
+#' @source \url{https://support.10xgenomics.com/single-cell-gene-expression}
+#'
+#' @examples
+#' data(pbmc3k_1000)
+"pbmc3k_1000"
+
+
+
+#' @title Iterative Clustering Projection (ICP) clustering
+#'
+#' @description
+#' The function implements Iterative Clustering Projection (ICP): a
+#' supervised learning -based clustering, which maximizes clustering similarity
+#' between the clustering and its projection by logistic regression.
+#'
+#' @param normalized.data A sparse matrix (dgCMatrix) containing
+#' normalized gene expression data with genes in rows and cells in columns.
+#' Default is \code{NULL}.
+#' @param k A positive integer greater or equal to 2, denoting the number of
+#' clusters in ICP. Default is \code{15}.
+#' @param d A numeric that defines how many cells per cluster should be
+#' down- and oversampled (d in N/k*d), when stratified.downsampling=FALSE,
+#' or what fraction should be downsampled in the stratified approach
+#' ,stratified.downsampling=TRUE. Default is \code{0.3}.
+#' @param r A positive integer that denotes the number of reiterations
+#' performed until the algorithm stops. Default is \code{5}.
+#' @param C Cost of constraints violation (\code{C}) for L1-regularization.
+#' Default is \code{0.3}.
+#' @param regularization "L1" for LASSO and "L2" for Ridge. Default is "L1".
+#' @param max.iterations A positive integer that denotes the maximum number of
+#' iterations performed until the algorithm ends. Default is \code{200}.
+#'
+#' @return A list comprising the probability matrix and the clustering
+#' similarity measures: ARI, NMI, etc.
+#'
+#' @keywords iterative clustering projection ICP clustering
+#'
+#' @import Matrix
+#' @importFrom aricode clustComp
+#' @import LiblineaR
+#' @import SparseM
+#'
 #' @export
-setGeneric("RunParallelICP",signature = "object",
-           function(object,
-                    k = 15,
-                    d = 0.3,
-                    L = 200,
-                    r = 5,
-                    C = 0.3,
-                    regularization.type = "L1",
-                    max.iterations = 200,
-                    threads = 0,
-                    rand.seed = 1) {
-  standardGeneric("RunParallelICP")
-})
+#'
+RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
+                   regularization = "L1", max.iterations = 200) {
+
+  first_round = TRUE
+  metrics <- NULL
+  idents <- list()
+  iterations = 1 # iteration
+
+  probs <- NULL
+
+  # Main loop that runs until the number of reiterations
+  # or maximum number of iterations is reached.
+  while (TRUE) {
+
+    # Step 1: initialize clustering (ident_1) randomly, ARI=0 and r=0
+    cat(paste0("Iteration round ",iterations,"\n"))
+    if (first_round) {
+      ident_1 <- factor(sample(seq_len(k),ncol(normalized.data),replace = T))
+      names(ident_1) <- colnames(normalized.data)
+      idents[[1]] <- ident_1
+      ari <- 0
+      reiterations <- 0
+    }
+
+    # Step 2: train logistic regression model
+    res <- LogisticRegression(training.sparse.matrix = t(normalized.data),
+                              training.ident = ident_1,
+                              C = C,
+                              regularization=regularization,
+                              test.sparse.matrix = t(normalized.data),
+                              d=d)
+
+    names(res$predictions) <- colnames(normalized.data)
+    rownames(res$probabilities) <- colnames(normalized.data)
+
+    # projected cluster probabilities
+    probs <- res$probabilities
+
+    # projected clusters
+    ident_2 <- res$predictions
+
+    # If the number of clusters in prediction dropped below 2,
+    # start from the beginning. k should not decrease
+    # during the iteration when down- and oversampling are used.
+    if (length(levels(factor(as.character(ident_2)))) < 2)
+    {
+      first_round = TRUE
+      metrics <- NULL
+      idents <- list()
+      iterations <- 1
+      next
+    }
+
+    # Step 3: compare clustering similarity between clustering and projection
+    comp_clust <- clustComp(c1 = ident_1, c2 = ident_2)
+
+    if(first_round & comp_clust$ARI <= 0)
+    {
+      next
+    }
+
+    # Step 3.1: If ARI did not increase, reiterate
+    if (comp_clust$ARI <= ari & !(first_round))
+    {
+      cat(paste0("ARI decreased... re-iterating\n"))
+      reiterations <- reiterations + 1
+    }
+    # Step 3.2: If ARI increased, proceed to next iteration round
+    else {
+      cat(paste0("ARI: ",comp_clust$ARI,"\n"))
+
+      # Update clustering to the predicted clusters
+      ident_1 <- ident_2
+      first_round <- FALSE
+      metrics <- cbind(metrics,comp_clust)
+      iterations = iterations + 1
+      idents[[iterations]] <- ident_2
+
+      ari <- comp_clust$ARI
+      reiterations <- 0
+
+    }
+    # Step 4: If the maximum number of reiterations or iterations was
+    # reached, break the while loop
+    if (reiterations == r | iterations == max.iterations)
+    {
+      break
+    }
+  }
+  # Step 5: Return result
+
+  return(list(probabilities=probs, metrics=metrics))
+}
+
+#' @title Down- and oversample data
+#'
+#' @description
+#' The function implements a script down- and oversamples data to
+#' include n cells.
+#'
+#' @param x A character or numeric vector of data to down-and oversample.
+#' @param n How many cells to include per cluster.
+#'
+#' @return a list containing the output of the LiblineaR prediction
+#'
+#' @keywords downsampling oversampling
+#'
+#' @export
+#'
+DownOverSampling <- function(x, n = 50) {
+  if (length(x) < n) {
+    res <- sample(x, size = n, replace = T)
+  } else {
+    res <- sample(x, size = n, replace = F)
+  }
+  return(res)
+}
+
+
+#' @title Clustering projection using logistic regression from
+#' the LiblineaR R package
+#'
+#' @description
+#' The function implements a script that downsamples data a dataset, trains
+#' a logistic regression classifier model
+#' and then projects its clustering onto itself using a trained
+#' L1-regularized logistic regression model.
+#'
+#' @param training.sparse.matrix A sparse matrix (dgCMatrix) containing training
+#' sample's gene expression data with genes in rows and cells in columns.
+#' Default is \code{NULL}.
+#' @param training.ident A named factor containing sample's cluster labels for
+#' each cell in training.sparse.matrix. Default is \code{NULL}.
+#' @param C Cost of constraints violation in L1-regularized logistic
+#' regression (C). Default is \code{0.3}.
+#' @param regularization "L1" for LASSO and "L2" for Ridge. Default is "L1".
+#' @param test.sparse.matrix A sparse matrix (dgCMatrix) containing test
+#' sample's gene expression data with genes in rows and cells in columns.
+#' Default is \code{NULL}.
+#' @param d A numeric smaller than \code{1} and greater than \code{0}
+#' that determines how many cells per cluster should be
+#' down- and oversampled (d in N/k*d), where N is the total number of cells
+#' and k the number of clusters. Default is \code{0.3}.
+#'
+#' @return a list containing the output of the LiblineaR prediction
+#'
+#' @keywords logistic regression LiblineaR projection downsampling oversampling
+#'
+#' @import Matrix
+#' @import LiblineaR
+#' @import SparseM
+#'
+#' @export
+#'
+LogisticRegression <- function(training.sparse.matrix = NULL,
+                               training.ident = NULL,
+                               C = 0.3,
+                               regularization = "L1",
+                               test.sparse.matrix = NULL,
+                               d = 0.3) {
+
+  # Downsample training data
+  if (!is.null(d))
+  {
+    cells_per_cluster <- ceiling((length(training.ident) /
+                                    (length(levels(training.ident)))) * d)
+
+    training_ident_subset <-
+      as.character(unlist(lapply(split(names(training.ident),training.ident),
+                                 function(x)
+                                   DownOverSampling(x,cells_per_cluster))))
+
+    training.ident <- training.ident[training_ident_subset]
+    training.sparse.matrix <- training.sparse.matrix[training_ident_subset,]
+  }
+
+  # Transform training data from dgCMatrix to matrix.csr
+  training_size <- nrow(training.sparse.matrix)
+
+  colnames_matrix <- colnames(training.sparse.matrix)
+
+  training.sparse.matrix <- new("matrix.csc", ra = training.sparse.matrix@x,
+                                ja = training.sparse.matrix@i + 1L,
+                                ia = training.sparse.matrix@p + 1L,
+                                dimension = training.sparse.matrix@Dim)
+  training.sparse.matrix <- as.matrix.csr(training.sparse.matrix)
+
+  # Transform test data from dgCMatrix to matrix.csr
+  test.sparse.matrix <- new("matrix.csc", ra = test.sparse.matrix@x,
+                            ja = test.sparse.matrix@i + 1L,
+                            ia = test.sparse.matrix@p + 1L,
+                            dimension = test.sparse.matrix@Dim)
+  test.sparse.matrix <- as.matrix.csr(test.sparse.matrix)
+
+  if (regularization=="L2")
+  {
+    type <- 7
+  } else if (regularization=="L1")
+  {
+    type <- 6 #L1
+  } else {
+    stop("'regularization' must be either 'L1' or 'L2'")
+  }
+
+  model <- LiblineaR(training.sparse.matrix, training.ident,
+                     type = type, cost = C,
+                     svr_eps = NULL, bias = 1, wi = NULL,
+                     cross = 0, verbose = FALSE,
+                     findC = FALSE, useInitC = TRUE)
+
+
+  # Predict test data using the model
+  prediction <- predict(model,proba = TRUE,test.sparse.matrix)
+
+  # Return result
+  return(prediction)
+}
+
+#' @title Select top or bottom N genes based on a selection criterion
+#'
+#' @description
+#' The SelectTopGenes function enables selecting top or bottom N genes based
+#' on a criterion (e.g. log2FC or adj.p.value).
+#'
+#' @param gene.markers A data frame of the gene markers found by
+#' FindAllGeneMarkers function.
+#' @param top.N How many top or bottom genes to select. Default is \code{10}.
+#' @param criterion.type Which criterion to use for selecting the genes.
+#' Default is "log2FC".
+#' @param reverse Whether to select bottom instead of top N genes.
+#' Default is \code{FALSE}.
+#'
+#' @return an object of `data.frame` class
+#'
+#' @keywords select top bottom N genes
+#'
+#' @importFrom dplyr group_by %>% top_n
 
 #' @export
-setGeneric("VisualizeQC",signature = "object",
-           function(object,
-                    return.plot = FALSE) {
-  standardGeneric("VisualizeQC")
-})
+#'
+SelectTopGenes <- function(gene.markers = NULL, top.N = 10,
+                           criterion.type = "log2FC", reverse=FALSE)
+{
 
-#' @export
-setGeneric("RunPCA", signature = "object",
-           function(object,
-                    p = 50,
-                    scale = FALSE,
-                    threshold = 0) {
-  standardGeneric("RunPCA")
-})
+  if (reverse)
+  {
+    top.N <- -top.N
+  }
 
-#' @export
-setGeneric("PCAElbowPlot", signature = "object",
-           function(object,
-                    return.plot=FALSE) {
-  standardGeneric("PCAElbowPlot")
-})
+  gene.markers %>%
+    group_by(cluster) %>% top_n(top.N, get(criterion.type)) -> top_N
 
-#' @export
-setGeneric("RunUMAP", signature = "object",
-           function(object) {
-  standardGeneric("RunUMAP")
-})
-
-#' @export
-setGeneric("RunTSNE", signature = "object",
-           function(object,
-                    perplexity = 30) {
-  standardGeneric("RunTSNE")
-})
-
-#' @export
-setGeneric("HierarchicalClustering", signature = "object",
-           function(object) {
-  standardGeneric("HierarchicalClustering")
-})
-
-#' @export
-setGeneric("CalculateSilhouetteInformation", signature = "object",
-           function(object,
-                    K.range = 2:50) {
-  standardGeneric("CalculateSilhouetteInformation")
-})
-
-#' @export
-setGeneric("SilhouetteCurve", signature = "object",
-           function(object,
-                    return.plot = FALSE) {
-  standardGeneric("SilhouetteCurve")
-})
-
-#' @export
-setGeneric("SelectKClusters", signature = "object",
-           function(object,
-                    K = NULL) {
-  standardGeneric("SelectKClusters")
-})
-
-#' @export
-setGeneric("MergeClusters", signature = "object",
-           function(object,
-                    clusters.to.merge = "",
-                    new.name = "") {
-  standardGeneric("MergeClusters")
-})
-
-#' @export
-setGeneric("RenameAllClusters", signature = "object",
-           function(object,
-                    new.cluster.names = "") {
-  standardGeneric("RenameAllClusters")
-})
-
-#' @export
-setGeneric("RenameCluster", signature = "object",
-           function(object,
-                    old.cluster.name = "",
-                    new.cluster.name = "") {
-  standardGeneric("RenameCluster")
-})
-
-#' @export
-setGeneric("GeneScatterPlot", signature = "object",
-           function(object,
-                    genes = "",
-                    return.plot = FALSE,
-                    dim.reduction.type = "tsne",
-                    point.size = 0.7,
-                    title = "",
-                    plot.expressing.cells.last = FALSE) {
-  standardGeneric("GeneScatterPlot")
-})
-
-#' @export
-setGeneric("ClusteringScatterPlot",signature = "object",
-           function(object,
-                    clustering.type = "manual",
-                    return.plot = FALSE,
-                    dim.reduction.type = "",
-                    point.size = 0.7,
-                    title = "",
-                    show.legend = TRUE) {
-  standardGeneric("ClusteringScatterPlot")
-})
-
-#' @export
-setGeneric("FindAllGeneMarkers", signature = "object",
-           function(object,
-                    clustering.type = "manual",
-                    test = "wilcox",
-                    log2fc.threshold = 0.25,
-                    min.pct = 0.1,
-                    min.diff.pct = NULL,
-                    min.cells.group = 3,
-                    max.cells.per.cluster = NULL,
-                    random.seed = 1,
-                    pseudocount.use = 1,
-                    return.thresh = 0.01,
-                    only.pos = FALSE) {
-  standardGeneric("FindAllGeneMarkers")
-})
-
-#' @export
-setGeneric("FindGeneMarkers", signature = "object",
-           function(object,
-                    clusters.1 = NULL,
-                    clusters.2 = NULL,
-                    clustering.type = "",
-                    test = "wilcox",
-                    logfc.threshold = 0.25,
-                    min.pct = 0.1,
-                    min.diff.pct = NULL,
-                    min.cells.group = 3,
-                    max.cells.per.cluster = NULL,
-                    random.seed = 1,
-                    pseudocount.use = 1,
-                    return.thresh = 0.01,
-                    only.pos = FALSE) {
-  standardGeneric("FindGeneMarkers")
-})
-
-#' @export
-setGeneric("VlnPlot", signature = "object",
-           function(object,
-                    clustering.type = "manual",
-                    genes = NULL,
-                    return.plot = FALSE) {
-  standardGeneric("VlnPlot")
-})
-
-#' @export
-setGeneric("GeneHeatmap", signature = "object",
-           function(object,
-                    clustering.type = "manual",
-                    gene.markers = NULL) {
-  standardGeneric("GeneHeatmap")
-})
-
-#' @export
-setGeneric("AnnotationScatterPlot", signature = "object",
-           function(object,
-                    annotation = NULL,
-                    return.plot = FALSE,
-                    dim.reduction.type = "",
-                    point.size = 0.7,
-                    show.legend = FALSE) {
-  standardGeneric("AnnotationScatterPlot")
-})
-
-#' @export
-setGeneric("GeneDropoutRatePlot", signature = "object",
-           function(object,
-                    genes = NULL,
-                    return.plot = FALSE,
-                    clusters = NULL,
-                    clustering.type = "manual") {
-  standardGeneric("GeneDropoutRatePlot")
-})
+  return(top_N)
+}

@@ -1,4 +1,10 @@
 #' @export
+setGeneric("PrepareILoReg",signature = "object",
+           function(object) {
+             standardGeneric("PrepareILoReg")
+           })
+
+#' @export
 setGeneric("RunParallelICP",signature = "object",
            function(object,
                     k = 15,
@@ -6,10 +12,9 @@ setGeneric("RunParallelICP",signature = "object",
                     L = 200,
                     r = 5,
                     C = 0.3,
-                    regularization.type = "L1",
+                    regularization = "L1",
                     max.iterations = 200,
-                    threads = 0,
-                    rand.seed = 1) {
+                    threads = 0) {
   standardGeneric("RunParallelICP")
 })
 
@@ -58,7 +63,7 @@ setGeneric("HierarchicalClustering", signature = "object",
 #' @export
 setGeneric("CalculateSilhouetteInformation", signature = "object",
            function(object,
-                    K.range = 2:50) {
+                    K.start = 2, K.end = 50) {
   standardGeneric("CalculateSilhouetteInformation")
 })
 
@@ -133,7 +138,6 @@ setGeneric("FindAllGeneMarkers", signature = "object",
                     min.diff.pct = NULL,
                     min.cells.group = 3,
                     max.cells.per.cluster = NULL,
-                    random.seed = 1,
                     pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
@@ -152,7 +156,6 @@ setGeneric("FindGeneMarkers", signature = "object",
                     min.diff.pct = NULL,
                     min.cells.group = 3,
                     max.cells.per.cluster = NULL,
-                    random.seed = 1,
                     pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
