@@ -14,7 +14,7 @@ Authors@R: c(person("Johannes", "Smolander",
              person("Laura L", "Elo",
              role=c("aut")))
 License: GPL-3
-Imports: Matrix, parallel, doParallel, foreach, tictoc, 
+Imports: Matrix, parallel, doParallel, foreach, 
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
           DescTools, plyr, scales, pheatmap, reshape2, dplyr, doRNG, SingleCellExperiment,
@@ -26,7 +26,7 @@ RoxygenNote: 7.0.0
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 biocViews: SingleCell, Software, Clustering, DimensionReduction, 
-            LogisticRegression, RNASeq, Visualization, Transcriptomics, 
+            RNASeq, Visualization, Transcriptomics, 
             DataRepresentation, DifferentialExpression, Transcription
 NeedsCompilation: no
 URL: https://gitlab.utu.fi/pajosm/iloreg

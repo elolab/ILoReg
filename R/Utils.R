@@ -58,21 +58,18 @@
 RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
                    regularization = "L1", max.iterations = 200) {
 
-  first_round = TRUE
+  first_round <- TRUE
   metrics <- NULL
   idents <- list()
-  iterations = 1 # iteration
-
+  iterations <- 1
   probs <- NULL
 
-  # Main loop that runs until the number of reiterations
-  # or maximum number of iterations is reached.
   while (TRUE) {
 
     # Step 1: initialize clustering (ident_1) randomly, ARI=0 and r=0
     cat(paste0("Iteration round ",iterations,"\n"))
     if (first_round) {
-      ident_1 <- factor(sample(seq_len(k),ncol(normalized.data),replace = T))
+      ident_1 <- factor(sample(seq_len(k),ncol(normalized.data),replace = TRUE))
       names(ident_1) <- colnames(normalized.data)
       idents[[1]] <- ident_1
       ari <- 0
@@ -81,27 +78,25 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
 
     # Step 2: train logistic regression model
     res <- LogisticRegression(training.sparse.matrix = t(normalized.data),
-                              training.ident = ident_1,
-                              C = C,
+                              training.ident = ident_1, C = C,
                               regularization=regularization,
-                              test.sparse.matrix = t(normalized.data),
-                              d=d)
+                              test.sparse.matrix = t(normalized.data), d=d)
 
     names(res$predictions) <- colnames(normalized.data)
     rownames(res$probabilities) <- colnames(normalized.data)
 
-    # projected cluster probabilities
+    # Projected cluster probabilities
     probs <- res$probabilities
 
-    # projected clusters
+    # Projected clusters
     ident_2 <- res$predictions
 
-    # If the number of clusters in prediction dropped below 2,
-    # start from the beginning. k should not decrease
-    # during the iteration when down- and oversampling are used.
+    # Safety procedure: If k drops to 1, start from the beginning.
+    # k should NOT decrease during the iteration when
+    # down- and oversampling approach is used.
     if (length(levels(factor(as.character(ident_2)))) < 2)
     {
-      first_round = TRUE
+      first_round <- TRUE
       metrics <- NULL
       idents <- list()
       iterations <- 1
@@ -119,20 +114,16 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     # Step 3.1: If ARI did not increase, reiterate
     if (comp_clust$ARI <= ari & !(first_round))
     {
-      cat(paste0("ARI decreased... re-iterating\n"))
       reiterations <- reiterations + 1
     }
     # Step 3.2: If ARI increased, proceed to next iteration round
     else {
-      cat(paste0("ARI: ",comp_clust$ARI,"\n"))
-
       # Update clustering to the predicted clusters
       ident_1 <- ident_2
       first_round <- FALSE
       metrics <- cbind(metrics,comp_clust)
       iterations = iterations + 1
       idents[[iterations]] <- ident_2
-
       ari <- comp_clust$ARI
       reiterations <- 0
 
@@ -145,7 +136,6 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     }
   }
   # Step 5: Return result
-
   return(list(probabilities=probs, metrics=metrics))
 }
 
@@ -166,9 +156,9 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
 #'
 DownOverSampling <- function(x, n = 50) {
   if (length(x) < n) {
-    res <- sample(x, size = n, replace = T)
+    res <- sample(x, size = n, replace = TRUE)
   } else {
-    res <- sample(x, size = n, replace = F)
+    res <- sample(x, size = n, replace = FALSE)
   }
   return(res)
 }
@@ -205,7 +195,7 @@ DownOverSampling <- function(x, n = 50) {
 #'
 #' @import Matrix
 #' @import SparseM
-#' @importFrom methods new
+#' @importFrom methods as
 #' @importFrom LiblineaR LiblineaR
 #' @importFrom stats predict
 #'
@@ -233,23 +223,9 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
     training.sparse.matrix <- training.sparse.matrix[training_ident_subset,]
   }
 
-  # Transform training data from dgCMatrix to matrix.csr
-  training_size <- nrow(training.sparse.matrix)
-
-  colnames_matrix <- colnames(training.sparse.matrix)
-
-  training.sparse.matrix <- new("matrix.csc", ra = training.sparse.matrix@x,
-                                ja = training.sparse.matrix@i + 1L,
-                                ia = training.sparse.matrix@p + 1L,
-                                dimension = training.sparse.matrix@Dim)
-  training.sparse.matrix <- as.matrix.csr(training.sparse.matrix)
-
-  # Transform test data from dgCMatrix to matrix.csr
-  test.sparse.matrix <- new("matrix.csc", ra = test.sparse.matrix@x,
-                            ja = test.sparse.matrix@i + 1L,
-                            ia = test.sparse.matrix@p + 1L,
-                            dimension = test.sparse.matrix@Dim)
-  test.sparse.matrix <- as.matrix.csr(test.sparse.matrix)
+  # Transform training and test data from dgCMatrix to matrix.csr
+  training.sparse.matrix <- as(training.sparse.matrix,"matrix.csr")
+  test.sparse.matrix <- as(test.sparse.matrix,"matrix.csr")
 
   if (regularization=="L2")
   {
@@ -262,16 +238,9 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
   }
 
   model <- LiblineaR(training.sparse.matrix, training.ident,
-                     type = type, cost = C,
-                     svr_eps = NULL, bias = 1, wi = NULL,
-                     cross = 0, verbose = FALSE,
-                     findC = FALSE, useInitC = TRUE)
-
-
-  # Predict test data using the model
+                     type = type, cost = C)
   prediction <- predict(model,proba = TRUE,test.sparse.matrix)
 
-  # Return result
   return(prediction)
 }
 

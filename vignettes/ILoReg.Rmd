@@ -64,7 +64,7 @@ The only required input for `ILoReg` is a normalized gene expression matrix with
 # data(pbmc3k_1000)
 
 library(SingleCellExperiment)
-# sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_1000))
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_1000))
 ```
 
 
@@ -94,7 +94,7 @@ In the following, we give a brief summary of the parameters.
 ```{r eval = FALSE}
 # Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 set.seed(1)
-sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 50, r = 5, C = 0.3, 
+sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 10, r = 5, C = 0.3, 
                       regularization = "L1",
                       threads = 0)
 # At this point saving the results is recommended.

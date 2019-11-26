@@ -241,7 +241,7 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
                    .maxcombine = 1000,
                    .inorder = FALSE,
                    .export = c('RunICP','LogisticRegression'),
-                   .packages=c("tictoc","Matrix","aricode","LiblineaR",
+                   .packages=c("Matrix","aricode","LiblineaR",
                                "SparseM"),
                    .multicombine = TRUE)  %dorng% {
                      try({
@@ -1000,7 +1000,7 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
 
       if (plot.expressing.cells.last)
       {
-        df <- df[order(df$group,decreasing = F),]
+        df <- df[order(df$group,decreasing = FALSE),]
       }
       p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
         geom_point(size=point.size,aes_string(color='group')) +
@@ -1049,7 +1049,7 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
 
       if (plot.expressing.cells.last)
       {
-        df <- df[order(df$group,decreasing = F),]
+        df <- df[order(df$group,decreasing = FALSE),]
       }
 
       if (title=="") {
