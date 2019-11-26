@@ -6,15 +6,7 @@ setGeneric("PrepareILoReg",signature = "object",
 
 #' @export
 setGeneric("RunParallelICP",signature = "object",
-           function(object,
-                    k = 15,
-                    d = 0.3,
-                    L = 200,
-                    r = 5,
-                    C = 0.3,
-                    regularization = "L1",
-                    max.iterations = 200,
-                    threads = 0) {
+           function(object, k = 15, d = 0.3, L = 200, r = 5, C = 0.3, reg.type = "L1", max.iter = 200, threads = 0) {
   standardGeneric("RunParallelICP")
 })
 

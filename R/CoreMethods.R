@@ -26,7 +26,7 @@ PrepareILoReg.SingleCellExperiment <- function(object) {
     stop(paste("`Error: `logcounts` slot is missing from your ",
                "SingleCellExperiment object. This can be any kind of ",
                "normalized data matrix. Set it by executing ",
-               "logcounts(object) <- log_norm_counts",sep = ""))
+               "logcounts(object) <- norm_data",sep = ""))
     return(object)
   }
 
@@ -46,8 +46,8 @@ PrepareILoReg.SingleCellExperiment <- function(object) {
     message(paste("Converting object of `matrix` class into `dgCMatrix`.",
                   " Please note that ILoReg has been designed to work with ",
                   "sparse data, i.e. data with ",
-                  "a high proportion of zero values! Using dense data will likely " ,
-                  "increase the run time and the memory usage drastically!",sep=""))
+                  "a high proportion of zero values! Dense data will likely " ,
+                  "increase run time and memory usage drastically!",sep=""))
   }
   else if (is(logcounts(object), "data.frame")) {
     logcounts(object) <- Matrix(as.matrix(logcounts(object)),sparse = TRUE)
@@ -73,9 +73,6 @@ PrepareILoReg.SingleCellExperiment <- function(object) {
   message(paste(genes_after_filtering,"/",genes_before_filtering,
                 " genes remain after filtering genes with only zero values.",
                 sep = ""))
-
-  # define feature names in feature_symbol column
-  rowData(object)$feature_symbol <- rownames(object)
 
   # Create a place into `metadata`` slot for the data from ILoReg
   metadata(object)$iloreg <- list()
@@ -120,13 +117,13 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' selected that are used to build the projection classifier. Decreasing to a
 #' very low value (~ \code{0.01}) can lead to failure to identify central cell
 #' populations. Default \code{0.3}.
-#' @param regularization "L1" or "L2". L2-regularization was not
-#' investigated in the manuscript, but it result will more similar to
-#' conventional scRNA-seq methods that select. Default is "L1".
-#' @param max.iterations A positive integer that denotes
+#' @param reg.type "L1" or "L2". L2-regularization was not
+#' investigated in the manuscript, but it leads to a more conventional
+#' outcome (less subpopulations). Default is "L1".
+#' @param max.iter A positive integer that denotes
 #' the maximum number of iterations performed until ICP stops. This parameter
 #' is only useful in situations where ICP converges extremely slowly, preventing
-#' the algorithm from running too long. In most cases, reaching
+#' the algorithm to run too long. In most cases, reaching
 #' the number of reiterations (\code{r=5}) terminates the algorithm.
 #' Default is \code{200}.
 #' @param threads A positive integer that specifies how many logical processors
@@ -141,10 +138,11 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' @keywords iterative clustering projection ICP logistic regression LIBLINEAR
 #'
 #' @importFrom parallel makeCluster detectCores stopCluster
-#' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doRNG %dorng%
 #' @importFrom S4Vectors metadata metadata<-
+#' @importFrom utils txtProgressBar
+#' @importFrom doSNOW registerDoSNOW
 #' @import Matrix
 #' @import aricode
 #' @import LiblineaR
@@ -153,14 +151,15 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' @importFrom methods is
 #'
 RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
-                                                regularization,
-                                                max.iterations, threads){
+                                                reg.type, max.iter,
+                                                threads){
 
   if (!is(object,"SingleCellExperiment")) {
     stop("object must of 'sce' class")
+    return(object)
   }
 
-  if (!is.numeric(k) | k < 2 | k%%1!=0)
+  if (!is.numeric(k) | k < 2 | k%%1 != 0)
   {
     stop("k must be a positive integer and greater than 1")
   } else {
@@ -195,20 +194,18 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
     metadata(object)$iloreg$C <- C
   }
 
-  if (!is.character(regularization) |
-      (regularization != "L1" & regularization != "L2"))
+  if (!is.character(reg.type) | (reg.type != "L1" & reg.type != "L2"))
   {
-    stop("regularization parameter must be either 'L1' or 'L2'")
+    stop("reg.type parameter must be either 'L1' or 'L2'")
   } else {
-    metadata(object)$iloreg$regularization <- regularization
+    metadata(object)$iloreg$reg.type <- reg.type
   }
 
-  if (!is.numeric(max.iterations) | max.iterations <= 0 |
-      max.iterations%%1 != 0)
+  if (!is.numeric(max.iter) | max.iter <= 0 | max.iter%%1 != 0)
   {
-    stop("max.iterations must be a positive integer and greater than 0")
+    stop("max.iter must be a positive integer and greater than 0")
   } else {
-    metadata(object)$iloreg$max.iterations <- max.iterations
+    metadata(object)$iloreg$max.iter <- max.iter
   }
 
   if (!is.numeric(threads) | threads < 0 | threads%%1 != 0)
@@ -222,54 +219,45 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
 
   if (threads == 0) {
     cl <- makeCluster(detectCores(logical=TRUE)-1)
-    registerDoParallel(cl)
+    # registerDoParallel(cl)
+    registerDoSNOW(cl)
   } else if(threads == 1) {
-    message("Parallelism disabled, because threads = 1\n")
+    message("Parallelism disabled, because threads = 1")
     parallelism <- FALSE
   } else {
     cl<-makeCluster(threads)
-    registerDoParallel(cl)
+    # registerDoParallel(cl)
+    registerDoSNOW(cl)
   }
 
   dataset <- logcounts(object)
 
   if (parallelism) {
-
-    out <- foreach(task = seq_len(metadata(object)$iloreg$L),
+    pb <- txtProgressBar(min = 1, max = L, style = 3)
+    progress <- function(n) setTxtProgressBar(pb, n)
+    opts <- list(progress = progress)
+    out <- foreach(task = seq_len(L),
                    .verbose = FALSE,
                    .combine = list,
                    .maxcombine = 1000,
                    .inorder = FALSE,
-                   .export = c('RunICP','LogisticRegression'),
-                   .packages=c("Matrix","aricode","LiblineaR",
-                               "SparseM"),
-                   .multicombine = TRUE)  %dorng% {
+                   .multicombine = TRUE,
+                   .options.snow = opts)  %dorng% {
                      try({
-                       RunICP(normalized.data = dataset,
-                              k = metadata(object)$iloreg$k,
-                              d = metadata(object)$iloreg$d,
-                              r = metadata(object)$iloreg$r,
-                              C = metadata(object)$iloreg$C,
-                              regularization =
-                                metadata(object)$iloreg$regularization,
-                              max.iterations =
-                                metadata(object)$iloreg$max.iterations)
+                       RunICP(normalized.data = dataset, k = k, d = d, r = r,
+                              C = C, reg.type = reg.type, max.iter = max.iter)
                      })
                    }
+    close(pb)
     # stop local cluster
     stopCluster(cl)
 
   } else {
     out <- list()
-    for (l in seq_len(metadata(object)$iloreg$L)) {
+    for (l in seq_len(L)) {
       try({
-        res <- RunICP(normalized.data = dataset,
-                      k = metadata(object)$iloreg$k,
-                      d = metadata(object)$iloreg$d,
-                      r = metadata(object)$iloreg$r,
-                      C = metadata(object)$iloreg$C,
-                      regularization = metadata(object)$iloreg$regularization,
-                      max.iterations = metadata(object)$iloreg$max.iterations)
+        res <- RunICP(normalized.data = dataset, k = k, d = d, r = r,
+                      C = C, reg.type = reg.type, max.iter = max.iter)
         out[[l]] <- res
       })
     }

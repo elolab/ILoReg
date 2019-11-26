@@ -10,8 +10,8 @@ RunICP(
   d = 0.3,
   r = 5,
   C = 5,
-  regularization = "L1",
-  max.iterations = 200
+  reg.type = "L1",
+  max.iter = 200
 )
 }
 \arguments{
@@ -30,12 +30,12 @@ or what fraction should be downsampled in the stratified approach
 \item{r}{A positive integer that denotes the number of reiterations
 performed until the algorithm stops. Default is \code{5}.}
 
-\item{C}{Cost of constraints violation (\code{C}) for L1-regularization.
+\item{C}{Cost of constraints violation (\code{C}) for L1-regulatization.
 Default is \code{0.3}.}
 
-\item{regularization}{"L1" for LASSO and "L2" for Ridge. Default is "L1".}
+\item{reg.type}{"L1" for LASSO and "L2" for Ridge. Default is "L1".}
 
-\item{max.iterations}{A positive integer that denotes the maximum number of
+\item{max.iter}{A positive integer that denotes the maximum number of
 iterations performed until the algorithm ends. Default is \code{200}.}
 }
 \value{

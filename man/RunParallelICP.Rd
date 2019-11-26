@@ -13,8 +13,8 @@ RunParallelICP.SingleCellExperiment(
   L,
   r,
   C,
-  regularization,
-  max.iterations,
+  reg.type,
+  max.iter,
   threads
 )
 
@@ -25,8 +25,8 @@ RunParallelICP.SingleCellExperiment(
   L = 200,
   r = 5,
   C = 0.3,
-  regularization = "L1",
-  max.iterations = 200,
+  reg.type = "L1",
+  max.iter = 200,
   threads = 0
 )
 }
@@ -62,14 +62,14 @@ selected that are used to build the projection classifier. Decreasing to a
 very low value (~ \code{0.01}) can lead to failure to identify central cell
 populations. Default \code{0.3}.}
 
-\item{regularization}{"L1" or "L2". L2-regularization was not
-investigated in the manuscript, but it result will more similar to
-conventional scRNA-seq methods that select. Default is "L1".}
+\item{reg.type}{"L1" or "L2". L2-regularization was not
+investigated in the manuscript, but it leads to a more conventional
+outcome (less subpopulations). Default is "L1".}
 
-\item{max.iterations}{A positive integer that denotes
+\item{max.iter}{A positive integer that denotes
 the maximum number of iterations performed until ICP stops. This parameter
 is only useful in situations where ICP converges extremely slowly, preventing
-the algorithm from running too long. In most cases, reaching
+the algorithm to run too long. In most cases, reaching
 the number of reiterations (\code{r=5}) terminates the algorithm.
 Default is \code{200}.}
 

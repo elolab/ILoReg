@@ -9,7 +9,7 @@ LogisticRegression(
   training.sparse.matrix = NULL,
   training.ident = NULL,
   C = 0.3,
-  regularization = "L1",
+  reg.type = "L1",
   test.sparse.matrix = NULL,
   d = 0.3
 )
@@ -25,7 +25,7 @@ each cell in training.sparse.matrix. Default is \code{NULL}.}
 \item{C}{Cost of constraints violation in L1-regularized logistic
 regression (C). Default is \code{0.3}.}
 
-\item{regularization}{"L1" for LASSO and "L2" for Ridge. Default is "L1".}
+\item{reg.type}{"L1" for LASSO and "L2" for Ridge. Default is "L1".}
 
 \item{test.sparse.matrix}{A sparse matrix (dgCMatrix) containing test
 sample's gene expression data with genes in rows and cells in columns.

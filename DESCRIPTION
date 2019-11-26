@@ -14,11 +14,11 @@ Authors@R: c(person("Johannes", "Smolander",
              person("Laura L", "Elo",
              role=c("aut")))
 License: GPL-3
-Imports: Matrix, parallel, doParallel, foreach, 
+Imports: Matrix, parallel, foreach, 
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
           DescTools, plyr, scales, pheatmap, reshape2, dplyr, doRNG, SingleCellExperiment,
-          SummarizedExperiment, S4Vectors, methods, stats
+          SummarizedExperiment, S4Vectors, methods, stats, doSNOW, utils
 Depends: R (>= 3.5.0)
 Encoding: UTF-8
 LazyData: TRUE

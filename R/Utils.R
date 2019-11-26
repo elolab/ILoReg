@@ -37,10 +37,10 @@
 #' ,stratified.downsampling=TRUE. Default is \code{0.3}.
 #' @param r A positive integer that denotes the number of reiterations
 #' performed until the algorithm stops. Default is \code{5}.
-#' @param C Cost of constraints violation (\code{C}) for L1-regularization.
+#' @param C Cost of constraints violation (\code{C}) for L1-regulatization.
 #' Default is \code{0.3}.
-#' @param regularization "L1" for LASSO and "L2" for Ridge. Default is "L1".
-#' @param max.iterations A positive integer that denotes the maximum number of
+#' @param reg.type "L1" for LASSO and "L2" for Ridge. Default is "L1".
+#' @param max.iter A positive integer that denotes the maximum number of
 #' iterations performed until the algorithm ends. Default is \code{200}.
 #'
 #' @return A list comprising the probability matrix and the clustering
@@ -56,7 +56,7 @@
 #' @export
 #'
 RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
-                   regularization = "L1", max.iterations = 200) {
+                   reg.type = "L1", max.iter = 200) {
 
   first_round <- TRUE
   metrics <- NULL
@@ -79,7 +79,7 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     # Step 2: train logistic regression model
     res <- LogisticRegression(training.sparse.matrix = t(normalized.data),
                               training.ident = ident_1, C = C,
-                              regularization=regularization,
+                              reg.type=reg.type,
                               test.sparse.matrix = t(normalized.data), d=d)
 
     names(res$predictions) <- colnames(normalized.data)
@@ -93,7 +93,7 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
 
     # Safety procedure: If k drops to 1, start from the beginning.
     # k should NOT decrease during the iteration when
-    # down- and oversampling approach is used.
+    # the down- and oversampling approach is used for balancing training data.
     if (length(levels(factor(as.character(ident_2)))) < 2)
     {
       first_round <- TRUE
@@ -130,7 +130,7 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     }
     # Step 4: If the maximum number of reiterations or iterations was
     # reached, break the while loop
-    if (reiterations == r | iterations == max.iterations)
+    if (reiterations == r | iterations == max.iter)
     {
       break
     }
@@ -180,7 +180,7 @@ DownOverSampling <- function(x, n = 50) {
 #' each cell in training.sparse.matrix. Default is \code{NULL}.
 #' @param C Cost of constraints violation in L1-regularized logistic
 #' regression (C). Default is \code{0.3}.
-#' @param regularization "L1" for LASSO and "L2" for Ridge. Default is "L1".
+#' @param reg.type "L1" for LASSO and "L2" for Ridge. Default is "L1".
 #' @param test.sparse.matrix A sparse matrix (dgCMatrix) containing test
 #' sample's gene expression data with genes in rows and cells in columns.
 #' Default is \code{NULL}.
@@ -204,20 +204,16 @@ DownOverSampling <- function(x, n = 50) {
 LogisticRegression <- function(training.sparse.matrix = NULL,
                                training.ident = NULL,
                                C = 0.3,
-                               regularization = "L1",
+                               reg.type = "L1",
                                test.sparse.matrix = NULL,
                                d = 0.3) {
 
   # Downsample training data
   if (!is.null(d))
   {
-    cells_per_cluster <- ceiling((length(training.ident) /
-                                    (length(levels(training.ident)))) * d)
+    cells_per_cluster <- ceiling((length(training.ident) / (length(levels(training.ident)))) * d)
 
-    training_ident_subset <-
-      as.character(unlist(lapply(split(names(training.ident),training.ident),
-                                 function(x)
-                                   DownOverSampling(x,cells_per_cluster))))
+    training_ident_subset <- as.character(unlist(lapply(split(names(training.ident),training.ident), function(x) DownOverSampling(x,cells_per_cluster))))
 
     training.ident <- training.ident[training_ident_subset]
     training.sparse.matrix <- training.sparse.matrix[training_ident_subset,]
@@ -227,14 +223,14 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
   training.sparse.matrix <- as(training.sparse.matrix,"matrix.csr")
   test.sparse.matrix <- as(test.sparse.matrix,"matrix.csr")
 
-  if (regularization=="L2")
+  if (reg.type=="L2")
   {
     type <- 7
-  } else if (regularization=="L1")
+  } else if (reg.type=="L1")
   {
     type <- 6 #L1
   } else {
-    stop("'regularization' must be either 'L1' or 'L2'")
+    stop("'reg.type' must be either 'L1' or 'L2'")
   }
 
   model <- LiblineaR(training.sparse.matrix, training.ident,
