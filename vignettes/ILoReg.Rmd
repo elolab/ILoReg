@@ -61,14 +61,16 @@ The only required input for `ILoReg` is a normalized gene expression matrix with
 
 
 ```{r}
+# data(pbmc3k_1000)
+
 library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_1000))
+# sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_1000))
 ```
 
 
 ```{r}
 library(ILoReg)
-sce <- PrepareILoReg(sce)
+# sce <- PrepareILoReg(sce)
 ```
 
 
@@ -100,7 +102,7 @@ saveRDS(sce,file = "~/pbmc3k_1000_iloreg.rds")
 ```
 
 ```{r}
-sce <- readRDS(sce,file = "~/pbmc3k_iloreg.rds")
+sce <- readRDS(file = "~/pbmc3k_1000_iloreg.rds")
 ```
 
 
@@ -195,7 +197,7 @@ plot_grid(ClusteringScatterPlot(sce,
 ### Merging clusters
 
 Identifying rare cell types, e.g. megakaryocytes or plasmacytoid dendritic cells, might require selecting a high value of $K$, but this in turn can form clusters that are not meaningful. Therefore, `ILoReg` provides a simple function for combining clusters.
-```{r Fig0, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%'}
+```{r Fig0, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%', eval = FALSE}
 # Visualization before merging
 tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
 umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
@@ -216,7 +218,7 @@ plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 ### Identification of gene markers
 
 `ILoReg` provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
-```{r}
+```{r, eval = FALSE}
 
 gene_markers <- FindAllGeneMarkers(sce,
                                    clustering.type = "manual",
@@ -235,7 +237,7 @@ gene_markers <- FindAllGeneMarkers(sce,
 ### Selecting top genes based on log2 fold-change
 
 Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
-```{r}
+```{r, eval = FALSE}
 top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",reverse = FALSE)
 top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",reverse = FALSE)
 top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",reverse = TRUE)
@@ -248,12 +250,12 @@ top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.
 
 Visualize gene expression levels of cells over t-SNE or UMAP visualization.
 
-```{r FigTop1Scatter, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%'}
+```{r FigTop1Scatter, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%', eval = FALSE}
 GeneScatterPlot(sce,genes = unique(top1$gene),dim.reduction.type = "tsne",point.size = 0.7)
 ```
 
 
-```{r FigTop1Scatter2, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%'}
+```{r FigTop1Scatter2, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%', eval = FALSE}
 GeneScatterPlot(sce,genes = unique(top1$gene),dim.reduction.type = "umap",point.size = 0.7)
 ```
 
@@ -262,7 +264,7 @@ GeneScatterPlot(sce,genes = unique(top1$gene),dim.reduction.type = "umap",point.
 
 GeneHeatmap function enables visualizing gene markers in a heatmap, where cells and genes are grouped by the clustering.
 
-```{r FigHM, echo=TRUE, fig.height=15, fig.width=15, out.width = '100%'}
+```{r FigHM, echo=TRUE, fig.height=15, fig.width=15, out.width = '100%', eval = FALSE}
 GeneHeatmap(sce,clustering.type = "manual",gene.markers = top10_log2FC)
 
 ```
@@ -270,7 +272,7 @@ GeneHeatmap(sce,clustering.type = "manual",gene.markers = top10_log2FC)
 
 ### Identification of differentially expressed genes between two arbitrary sets of clusters
 
-```{r}
+```{r, eval = FALSE}
 gene_markers_IGLL5_positive_b_cell_VS_negative <- FindGeneMarkers(sce,
                                                                   clusters.1 = c(29,15,14),
                                                                   clusters.2 = c(26,2),
@@ -328,7 +330,7 @@ SilhouetteCurve(sce,return.plot = F)
 ### Renaming clusters
 
 Rename all clusters at once with RenameAllClusters function.
-```{r FigRenaming, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%'}
+```{r FigRenaming, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%', eval = FALSE}
 sce <- SelectKClusters(sce,K=20)
 tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
 umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
@@ -340,7 +342,7 @@ plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 
 
 Rename one cluster with RenameCluster function.
-```{r FigRenaming2, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%'}
+```{r FigRenaming2, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%',eval = FALSE}
 sce <- SelectKClusters(sce,K=20)
 tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
 umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
@@ -353,7 +355,7 @@ plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 
 ### Visualize with custom cluster labels
 
-```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center"}
+```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center",eval = FALSE}
 # Select a clustering with K=20 clusters
 sce <- SelectKClusters(sce,K=20)
 # Generate a random annotation, in which cell has 90% change of having the same cluster as in ILoReg's clustering

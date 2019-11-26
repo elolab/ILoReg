@@ -99,31 +99,6 @@ two arbitrary combinations of clusters, e.g. 1_2 vs. 3_4_5.
 Gene and cell filters can be applied to accelerate
 the analysis, but this might lead to missing weak signals.
 }
-\examples{
-## Load 10X Chromium data and LogNormalized them.
-raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- Seurat::LogNormalize(raw_data)
-## Create a SingleCellExperiment object
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays=list(logcounts=data))
-## Cleans the data in `logcounts` slot: removes duplicate
-## and non-expressing genes.
-library(ILoReg)
-sce <- PreapareILoReg(sce)
-## Run L ICP runs in parallel
-sce <- RunParallelICP(sce)
-## Visualize QC
-VisualizeQC(sce)
-## Run PCA
-sce <- RunPCA(sce,p = 50,scale = FALSE)
-## Cluster hierarchically using the Ward's agglomeration
-sce <- HierarchicalClustering(sce)
-## Estimate optimal K using silhouette method
-sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-## Draw silhouette curve
-FindGeneMarkers(sce)
-
-}
 \keyword{DE}
 \keyword{analysis}
 \keyword{differential}

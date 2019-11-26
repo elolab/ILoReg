@@ -23,31 +23,6 @@ ggplot2 object if return.plot=TRUE
 Draw the silhouette curve: the average silhouette value across
 the cells for a range of different K values.
 }
-\examples{
-## Load 10X Chromium data and LogNormalized them.
-raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- Seurat::LogNormalize(raw_data)
-## Create a SingleCellExperiment object
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays=list(logcounts=data))
-## Cleans the data in `logcounts` slot: removes duplicate
-## and non-expressing genes.
-library(ILoReg)
-sce <- PreapareILoReg(sce)
-## Run L ICP runs in parallel
-sce <- RunParallelICP(sce)
-## Visualize QC
-VisualizeQC(sce)
-## Run PCA
-sce <- RunPCA(sce,p = 50,scale = FALSE)
-## Cluster hierarchically using the Ward's agglomeration
-sce <- HierarchicalClustering(sce)
-## Estimate optimal K using silhouette method
-sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-## Draw silhouette curve
-SilhouetteCurve(sce)
-
-}
 \keyword{clustering}
 \keyword{hierarchical}
 \keyword{ward}

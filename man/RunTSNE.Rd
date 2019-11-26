@@ -23,27 +23,6 @@ object of \code{SingleCellExperiment} class
 Run nonlinear dimensionality reduction using t-SNE with the
 PCA-transformed consensus matrix as input.
 }
-\examples{
-## Load 10X Chromium data and LogNormalized them.
-raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- Seurat::LogNormalize(raw_data)
-## Create a SingleCellExperiment object
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays=list(logcounts=data))
-## Cleans the data in `logcounts` slot: removes duplicate
-## and non-expressing genes.
-library(ILoReg)
-sce <- PreapareILoReg(sce)
-## Run L ICP runs in parallel
-sce <- RunParallelICP(sce)
-## Visualize QC
-VisualizeQC(sce)
-## Run PCA
-sce <- RunPCA(sce,p = 50,scale = FALSE)
-## Run t-SNE
-sce <- RunTSNE(sce)
-
-}
 \keyword{Barnes-Hut}
 \keyword{Embedding}
 \keyword{Neighbor}

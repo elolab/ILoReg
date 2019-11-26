@@ -204,8 +204,10 @@ DownOverSampling <- function(x, n = 50) {
 #' @keywords logistic regression LiblineaR projection downsampling oversampling
 #'
 #' @import Matrix
-#' @import LiblineaR
 #' @import SparseM
+#' @importFrom methods new
+#' @importFrom LiblineaR LiblineaR
+#' @importFrom stats predict
 #'
 #' @export
 #'
@@ -305,7 +307,7 @@ SelectTopGenes <- function(gene.markers = NULL, top.N = 10,
   }
 
   gene.markers %>%
-    group_by(cluster) %>% top_n(top.N, get(criterion.type)) -> top_N
+    group_by(.data$cluster) %>% top_n(top.N, get(criterion.type)) -> top_N
 
   return(top_N)
 }

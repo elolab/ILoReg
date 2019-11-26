@@ -18,14 +18,12 @@ Imports: Matrix, parallel, doParallel, foreach, tictoc,
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
           DescTools, plyr, scales, pheatmap, reshape2, dplyr, doRNG, SingleCellExperiment,
-          SummarizedExperiment, S4Vectors
+          SummarizedExperiment, S4Vectors, methods, stats
+Depends: R (>= 3.5.0)
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 7.0.0
-Suggests: 
-    knitr,
-    rmarkdown,
-    Seurat
+Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 biocViews: SingleCell, Software, Clustering, DimensionReduction, 
             LogisticRegression, RNASeq, Visualization, Transcriptomics, 

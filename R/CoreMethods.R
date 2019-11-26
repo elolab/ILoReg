@@ -16,17 +16,9 @@
 #' @importFrom SummarizedExperiment colData colData<- rowData rowData<- assayNames
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom Matrix rowSums Matrix
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PrepareILoReg(sce)
+#' @importFrom SingleCellExperiment logcounts logcounts<-
+#' @importFrom methods is
+#'
 PrepareILoReg.SingleCellExperiment <- function(object) {
 
   # Check that there are data in `logcounts` slot
@@ -157,20 +149,9 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' @import aricode
 #' @import LiblineaR
 #' @import SparseM
+#' @importFrom SingleCellExperiment logcounts
+#' @importFrom methods is
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PrepareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
 RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
                                                 regularization,
                                                 max.iterations, threads){
@@ -329,22 +310,6 @@ setMethod("RunParallelICP", signature(object = "SingleCellExperiment"),
 #' @importFrom aricode ARI
 #' @importFrom S4Vectors metadata metadata<-
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#'
 VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
 
   final_aris <- unlist(lapply(metadata(object)$iloreg$metrics,
@@ -394,7 +359,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
 
   # df <- rbind(df1,df2,df3)
 
-  p1 <- ggplot(df1, aes(x = Measure,y = value))+
+  p1 <- ggplot(df1, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE,fill = "#F8766D") +
     theme_bw() +
     ylab("Terminal projection accuracy") +
@@ -404,7 +369,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
           axis.ticks.x = element_blank()) +
     ylim(0,1)
 
-  p2 <- ggplot(df2, aes(x = Measure,y = value))+
+  p2 <- ggplot(df2, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE,fill = "#F8766D") +
     theme_bw() +
     ylab("Number of Epochs") +
@@ -413,7 +378,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank())
 
-  p3 <- ggplot(df3, aes(x = Measure,y = value))+
+  p3 <- ggplot(df3, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE, fill = "#F8766D") +
     theme_bw() +
     ylab("Average Pairwise ARI") +
@@ -463,24 +428,6 @@ setMethod("VisualizeQC", signature(object = "SingleCellExperiment"),
 #' @importFrom SingleCellExperiment reducedDim<-
 #' @importFrom S4Vectors metadata metadata<-
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ##
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#'
 RunPCA.SingleCellExperiment <- function(object, p, scale, threshold) {
 
   metadata(object)$iloreg$p <- p
@@ -493,7 +440,7 @@ RunPCA.SingleCellExperiment <- function(object, p, scale, threshold) {
     icp_runs_logical <- unlist(lapply(metadata(object)$iloreg$metrics,
                                       function(x) x["ARI",])) >= threshold
     X <- do.call(cbind,
-                 metadata(object)$iloreg$joint.probability[icp_runs_bool])
+                 metadata(object)$iloreg$joint.probability[icp_runs_logical])
   }
   X <- scale(X, scale = scale, center = TRUE)
 
@@ -539,25 +486,7 @@ setMethod("RunPCA", signature(object = "SingleCellExperiment"),
 #' @importFrom reshape2 melt
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom S4Vectors metadata metadata<-
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ##
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' PCAElbowPlot(sce,return.plot=FALSE)
+#' @importFrom stats sd
 #'
 PCAElbowPlot.SingleCellExperiment <- function(object, return.plot) {
 
@@ -568,7 +497,7 @@ PCAElbowPlot.SingleCellExperiment <- function(object, return.plot) {
                  list(seq_len(metadata(object)$iloreg$p),"SD"))
   df <- melt(df)
 
-  p <- ggplot(df, aes(x = Var1, y = value)) +
+  p <- ggplot(df, aes_string(x = 'Var1', y = 'value')) +
     geom_line(color = "blue") +
     geom_point(color = "black") +
     theme_bw() +
@@ -604,26 +533,6 @@ setMethod("PCAElbowPlot", signature(object = "SingleCellExperiment"),
 #'
 #' @importFrom umap umap
 #' @importFrom SingleCellExperiment reducedDim reducedDim<-
-
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Run UMAP
-#' sce <- RunUMAP(sce)
 #'
 RunUMAP.SingleCellExperiment <- function(object) {
 
@@ -659,26 +568,6 @@ setMethod("RunUMAP", signature(object = "SingleCellExperiment"),
 #'
 #' @importFrom Rtsne Rtsne
 #' @importFrom SingleCellExperiment reducedDim reducedDim<-
-
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Run t-SNE
-#' sce <- RunTSNE(sce)
 #'
 RunTSNE.SingleCellExperiment <- function(object, perplexity) {
 
@@ -715,26 +604,6 @@ setMethod("RunTSNE", signature(object = "SingleCellExperiment"),
 #' @importFrom fastcluster hclust.vector
 #' @importFrom S4Vectors metadata<-
 #' @importFrom SingleCellExperiment reducedDim
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
 #'
 HierarchicalClustering.SingleCellExperiment <- function(object) {
 
@@ -773,29 +642,8 @@ setMethod("HierarchicalClustering", signature(object = "SingleCellExperiment"),
 #' @importFrom parallelDist parDist
 #' @importFrom cluster silhouette
 #' @importFrom dendextend cutree
+#' @importFrom stats as.dendrogram
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce,K.start=2, K.end=50)
-
 CalculateSilhouetteInformation.SingleCellExperiment <-
   function(object, K.start, K.end) {
 
@@ -857,30 +705,6 @@ setMethod("CalculateSilhouetteInformation", signature(object = "SingleCellExperi
 #' @import ggplot2
 #' @importFrom DescTools AUC
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' SilhouetteCurve(sce)
-#'
 SilhouetteCurve.SingleCellExperiment <- function(object, return.plot) {
 
   sis <- metadata(object)$iloreg$silhouette.information
@@ -892,7 +716,7 @@ SilhouetteCurve.SingleCellExperiment <- function(object, return.plot) {
 
   auc <- round(AUC(df$K,df$AvgSilhouette),3)
 
-  p<-ggplot(df, aes(x=K, y=AvgSilhouette)) +
+  p<-ggplot(df, aes_string(x='K', y='AvgSilhouette')) +
     geom_line(color="red")+
     geom_point(color="black")+
     ylab("Average silhouette")+
@@ -928,30 +752,6 @@ setMethod("SilhouetteCurve", signature(object = "SingleCellExperiment"),
 #'
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom dendextend cutree
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' SelectKClusters(sce)
 #'
 SelectKClusters.SingleCellExperiment <- function(object, K) {
 
@@ -990,30 +790,6 @@ setMethod("SelectKClusters", signature(object = "SingleCellExperiment"),
 #' @keywords merge clusters
 #'
 #' @importFrom S4Vectors metadata metadata<-
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' MergeClusters(sce)
 #'
 MergeClusters.SingleCellExperiment <- function(object,
                                                clusters.to.merge,
@@ -1072,30 +848,6 @@ setMethod("MergeClusters", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom plyr mapvalues
 #'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' RenameAllClusters(sce)
-#'
 RenameAllClusters.SingleCellExperiment <- function(object, new.cluster.names) {
 
   new.cluster.names <- as.character(new.cluster.names)
@@ -1142,30 +894,6 @@ setMethod("RenameAllClusters", signature(object = "SingleCellExperiment"),
 #' @keywords rename one cluster
 #'
 #' @importFrom S4Vectors metadata metadata<-
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' RenameCluster(sce)
 #'
 RenameCluster.SingleCellExperiment <- function(object,
                                                old.cluster.name,
@@ -1226,35 +954,11 @@ setMethod("RenameCluster", signature(object = "SingleCellExperiment"),
 #'
 #' @keywords gene scatter plot visualization
 #'
-#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom SingleCellExperiment reducedDim logcounts
 #' @importFrom S4Vectors metadata metadata<-
 #' @import ggplot2
 #' @importFrom scales muted
 #' @importFrom cowplot plot_grid
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' GeneScatterPlot(sce)
 #'
 GeneScatterPlot.SingleCellExperiment <- function(object,
                                                  genes,
@@ -1298,8 +1002,8 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
       {
         df <- df[order(df$group,decreasing = F),]
       }
-      p<-ggplot(df, aes(x=dim1, y=dim2)) +
-        geom_point(size=point.size,aes(color=group)) +
+      p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+        geom_point(size=point.size,aes_string(color='group')) +
         scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
                                high = "blue",name = genes) +
         xlab(xlab) +
@@ -1309,8 +1013,8 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
 
 
     } else {
-      p<-ggplot(df, aes(x=dim1, y=dim2)) +
-        geom_point(size=point.size,aes(color=group)) +
+      p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+        geom_point(size=point.size,aes_string(color='group')) +
         scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
                                high = "blue",name = genes) +
         xlab(xlab) +
@@ -1349,8 +1053,8 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
       }
 
       if (title=="") {
-        p<-ggplot(df, aes(x=dim1, y=dim2)) +
-          geom_point(size=point.size,aes(color=group)) +
+        p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+          geom_point(size=point.size,aes_string(color='group')) +
           scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
                                  high = "blue",name = gene) +
           xlab(xlab) +
@@ -1358,8 +1062,8 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                 panel.background = element_blank(), axis.line = element_line(colour = "black"))
       } else {
-        p<-ggplot(df, aes(x=dim1, y=dim2)) +
-          geom_point(size=point.size,aes(color=group)) +
+        p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+          geom_point(size=point.size,aes_string(color='group')) +
           scale_colour_gradient2(low = muted("red"), mid = "lightgrey",
                                  high = "blue",name = gene) +
           xlab(xlab) +
@@ -1419,30 +1123,7 @@ setMethod("GeneScatterPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom S4Vectors metadata metadata<-
 #' @import ggplot2
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' ClusteringScatterPlot(sce)
+#' @importFrom stats median
 #'
 ClusteringScatterPlot.SingleCellExperiment <- function(object,
                                                        clustering.type,
@@ -1488,8 +1169,8 @@ ClusteringScatterPlot.SingleCellExperiment <- function(object,
 
   if (title == "")
   {
-    p<-ggplot(df, aes(x=dim1, y=dim2)) +
-      geom_point(size=point.size,aes(color=cluster)) +
+    p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+      geom_point(size=point.size,aes_string(color='cluster')) +
       xlab(xlab) +
       ylab(ylab) +
       theme_classic() +
@@ -1498,8 +1179,8 @@ ClusteringScatterPlot.SingleCellExperiment <- function(object,
 
   } else {
 
-    p<-ggplot(df, aes(x=dim1, y=dim2)) +
-      geom_point(size=point.size,aes(color=cluster)) +
+    p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+      geom_point(size=point.size,aes_string(color='cluster')) +
       xlab(xlab) +
       ylab(ylab) +
       theme_classic() +
@@ -1518,7 +1199,7 @@ ClusteringScatterPlot.SingleCellExperiment <- function(object,
   if (return.plot) {
     return(p)
   } else {
-    plot(p)
+    print(p)
   }
 
 }
@@ -1544,7 +1225,7 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' Default is "manual".
 #' @param test Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 #' AKA Mann-Whitney U test) is supported at the moment.
-#' @param logfc.threshold Filters out genes that have log2 fold-change of the
+#' @param log2fc.threshold Filters out genes that have log2 fold-change of the
 #' averaged gene expression values (with the pseudo-count value added to the
 #' averaged values before division if pseudocount.use > 0) below this threshold.
 #' Default is \code{0.25}.
@@ -1578,30 +1259,8 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' @keywords differential expression DE analysis gene markers
 #'
 #' @importFrom S4Vectors metadata
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' FindAllGeneMarkers(sce)
+#' @importFrom SingleCellExperiment logcounts
+#' @importFrom stats wilcox.test p.adjust
 #'
 FindAllGeneMarkers.SingleCellExperiment <- function(object,
                                                     clustering.type,
@@ -1818,30 +1477,8 @@ setMethod("FindAllGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @keywords differential expression DE analysis gene markers
 #'
 #' @importFrom S4Vectors metadata
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' FindGeneMarkers(sce)
+#' @importFrom stats wilcox.test p.adjust
+#' @importFrom SingleCellExperiment logcounts
 #'
 FindGeneMarkers.SingleCellExperiment <- function(object,
                                                  clusters.1,
@@ -1902,7 +1539,6 @@ FindGeneMarkers.SingleCellExperiment <- function(object,
       cells_in_cluster <- table(clustering)[cluster]
       if (max.cells.per.cluster < cells_in_cluster)
       {
-        set.seed(random.seed)
         inds <- sample(seq_len(cells_in_cluster),
                        size = max.cells.per.cluster,
                        replace = FALSE)
@@ -2062,30 +1698,7 @@ setMethod("FindGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @import ggplot2
 #' @importFrom cowplot plot_grid
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' VlnPlot(sce)
+#' @importFrom SingleCellExperiment logcounts
 #'
 VlnPlot.SingleCellExperiment <- function(object,
                                          clustering.type,
@@ -2113,7 +1726,7 @@ VlnPlot.SingleCellExperiment <- function(object,
   df$Cluster <- rep(as.character(clustering),length(genes))
   df$Cluster <- factor(df$Cluster)
 
-  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes(x=Cluster, y=Expression, fill=Cluster))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none"))
+  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes_string(x='Cluster', y='Expression', fill='Cluster'))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none"))
 
   p <- plot_grid(plotlist = plotlist)
 
@@ -2155,30 +1768,7 @@ setMethod("VlnPlot", signature(object = "SingleCellExperiment"),
 #'
 #' @importFrom S4Vectors metadata
 #' @import pheatmap
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' GeneHeatmap(sce)
+#' @importFrom SingleCellExperiment logcounts
 #'
 GeneHeatmap.SingleCellExperiment <- function(object,
                                              clustering.type,
@@ -2245,30 +1835,7 @@ setMethod("GeneHeatmap", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @import ggplot2
 #' @importFrom SingleCellExperiment reducedDim
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' AnnotationScatterPlot(sce)
+#' @importFrom stats median
 #'
 AnnotationScatterPlot.SingleCellExperiment <- function(object,
                                                        annotation,
@@ -2300,12 +1867,12 @@ AnnotationScatterPlot.SingleCellExperiment <- function(object,
 
   two.dim.data_ <- two.dim.data
   rownames(two.dim.data_) <- names(annotation)
-  cluster_centers <- lapply(levels(annotation),function(x) apply(two.dim.data_[names(annotation)[annotation==x],,drop=FALSE],2,median))
+  cluster_centers <- lapply(levels(annotation),function(x) apply(two.dim.data_[names(annotation)[annotation==x],,drop=FALSE],2, median))
   cluster_centers <- do.call(rbind,cluster_centers)
 
 
-  p<-ggplot(df, aes(x=dim1, y=dim2)) +
-    geom_point(size=point.size,aes(color=group)) +
+  p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
+    geom_point(size=point.size,aes_string(color='group')) +
     xlab(xlab) +
     ylab(ylab) +
     theme_classic() +
@@ -2363,30 +1930,8 @@ setMethod("AnnotationScatterPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @import ggplot2
 #' @importFrom reshape2 melt
-#'
-#' @examples
-#' ## Load 10X Chromium data and LogNormalized them.
-#' raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-#' data <- Seurat::LogNormalize(raw_data)
-#' ## Create a SingleCellExperiment object
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays=list(logcounts=data))
-#' ## Cleans the data in `logcounts` slot: removes duplicate
-#' ## and non-expressing genes.
-#' library(ILoReg)
-#' sce <- PreapareILoReg(sce)
-#' ## Run L ICP runs in parallel
-#' sce <- RunParallelICP(sce)
-#' ## Visualize QC
-#' VisualizeQC(sce)
-#' ## Run PCA
-#' sce <- RunPCA(sce,p = 50,scale = FALSE)
-#' ## Cluster hierarchically using the Ward's agglomeration
-#' sce <- HierarchicalClustering(sce)
-#' ## Estimate optimal K using silhouette method
-#' sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-#' ## Draw silhouette curve
-#' GeneDropoutRatePlot(sce)
+#' @importFrom SingleCellExperiment logcounts
+#' @importFrom stats runif
 #'
 GeneDropoutRatePlot.SingleCellExperiment <- function(object,
                                                      genes,
@@ -2427,7 +1972,7 @@ GeneDropoutRatePlot.SingleCellExperiment <- function(object,
   df$logical <- rownames(df) %in% genes
 
 
-  p <- ggplot(data=df, aes(x=average_nonzero_expression, y=value, color=logical)) +
+  p <- ggplot(data=df, aes_string(x='average_nonzero_expression', y='value', color='logical')) +
     geom_point()+
     theme_bw()+
     scale_colour_discrete(name="gene",labels=c("FALSE","TRUE")) +

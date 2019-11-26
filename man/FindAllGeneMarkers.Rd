@@ -45,6 +45,11 @@ Default is "manual".}
 \item{test}{Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 AKA Mann-Whitney U test) is supported at the moment.}
 
+\item{log2fc.threshold}{Filters out genes that have log2 fold-change of the
+averaged gene expression values (with the pseudo-count value added to the
+averaged values before division if pseudocount.use > 0) below this threshold.
+Default is \code{0.25}.}
+
 \item{min.pct}{Filters out genes that have dropout rate (fraction of cells
 expressing a gene) below this threshold in both comparison groups
 Default is \code{0.1}.}
@@ -73,11 +78,6 @@ threshold. Default is \code{0.01}.}
 \item{only.pos}{Whether to return only genes that have an adjusted p-value
 (adjusted by the Bonferroni method) below or equal to the threshold.
 Default is \code{FALSE}.}
-
-\item{logfc.threshold}{Filters out genes that have log2 fold-change of the
-averaged gene expression values (with the pseudo-count value added to the
-averaged values before division if pseudocount.use > 0) below this threshold.
-Default is \code{0.25}.}
 }
 \value{
 a data frame of the results if positive results were found, else NULL
@@ -88,31 +88,6 @@ This is done by differential expresission analysis where cells from one
 cluster are compared against the cells from the rest of the clusters.
 Gene and cell filters can be applied to accelerate
 the analysis, but this might lead to missing weak signals.
-}
-\examples{
-## Load 10X Chromium data and LogNormalized them.
-raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- Seurat::LogNormalize(raw_data)
-## Create a SingleCellExperiment object
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays=list(logcounts=data))
-## Cleans the data in `logcounts` slot: removes duplicate
-## and non-expressing genes.
-library(ILoReg)
-sce <- PreapareILoReg(sce)
-## Run L ICP runs in parallel
-sce <- RunParallelICP(sce)
-## Visualize QC
-VisualizeQC(sce)
-## Run PCA
-sce <- RunPCA(sce,p = 50,scale = FALSE)
-## Cluster hierarchically using the Ward's agglomeration
-sce <- HierarchicalClustering(sce)
-## Estimate optimal K using silhouette method
-sce <- CalculateSilhouetteInformation(sce, K.start = 2, K.end = 50)
-## Draw silhouette curve
-FindAllGeneMarkers(sce)
-
 }
 \keyword{DE}
 \keyword{analysis}

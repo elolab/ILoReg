@@ -86,20 +86,6 @@ This functions runs in parallel \code{L} ICP runs, which is the computational
 bottleneck of ILoReg. With ~ 3,000 cells this step should be completed
 in ~ 2 h and ~ 1 h with 3 and 12 logical processors (threads), respectively.
 }
-\examples{
-## Load 10X Chromium data and LogNormalized them.
-raw_data <- Seurat::Read10x("~/pbmc3k/filtered_gene_bc_matrices/hg19/")
-data <- Seurat::LogNormalize(raw_data)
-## Create a SingleCellExperiment object
-library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays=list(logcounts=data))
-## Cleans the data in `logcounts` slot: removes duplicate
-## and non-expressing genes.
-library(ILoReg)
-sce <- PrepareILoReg(sce)
-## Run L ICP runs in parallel
-sce <- RunParallelICP(sce)
-}
 \keyword{ICP}
 \keyword{LIBLINEAR}
 \keyword{clustering}
