@@ -21,6 +21,18 @@ object of \code{SingleCellExperiment} class
 \description{
 RenameAllClusters function enables renaming all cluster at once.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+sce <- RenameAllClusters(sce,new.cluster.names=LETTERS[seq_len(5)])
+
+}
 \keyword{all}
 \keyword{clusters}
 \keyword{rename}

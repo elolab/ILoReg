@@ -1,11 +1,11 @@
-#' 1000 cells downsampled from the pbmc3k dataset.
+#' 500 cells downsampled from the pbmc3k dataset.
 #'
 #' The preprocessing was done using Cell Ranger v2.2.0 and
 #' the GRCh37.p13 human reference genome.
 #'
 #' @docType data
 #'
-#' @usage data(pbmc3k_1000)
+#' @usage data(pbmc3k_500)
 #'
 #' @format raw_data and data, both dgCMatrix objects
 #'
@@ -14,8 +14,8 @@
 #' @source \url{https://support.10xgenomics.com/single-cell-gene-expression}
 #'
 #' @examples
-#' data(pbmc3k_1000)
-"pbmc3k_1000"
+#' data(pbmc3k_500)
+"pbmc3k_500"
 
 
 
@@ -67,7 +67,6 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
   while (TRUE) {
 
     # Step 1: initialize clustering (ident_1) randomly, ARI=0 and r=0
-    cat(paste0("Iteration round ",iterations,"\n"))
     if (first_round) {
       ident_1 <- factor(sample(seq_len(k),ncol(normalized.data),replace = TRUE))
       names(ident_1) <- colnames(normalized.data)
@@ -259,7 +258,7 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
 #' @keywords select top bottom N genes
 #'
 #' @importFrom dplyr group_by %>% top_n
-
+#'
 #' @export
 #'
 SelectTopGenes <- function(gene.markers = NULL, top.N = 10,

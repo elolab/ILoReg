@@ -19,6 +19,11 @@
 #' @importFrom SingleCellExperiment logcounts logcounts<-
 #' @importFrom methods is
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#'
 PrepareILoReg.SingleCellExperiment <- function(object) {
 
   # Check that there are data in `logcounts` slot
@@ -141,7 +146,7 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' @importFrom foreach foreach %dopar%
 #' @importFrom doRNG %dorng%
 #' @importFrom S4Vectors metadata metadata<-
-#' @importFrom utils txtProgressBar
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @importFrom doSNOW registerDoSNOW
 #' @import Matrix
 #' @import aricode
@@ -149,6 +154,13 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' @import SparseM
 #' @importFrom SingleCellExperiment logcounts
 #' @importFrom methods is
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,r=1,k=5)
 #'
 RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
                                                 reg.type, max.iter,
@@ -298,6 +310,14 @@ setMethod("RunParallelICP", signature(object = "SingleCellExperiment"),
 #' @importFrom aricode ARI
 #' @importFrom S4Vectors metadata metadata<-
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,k=5,C=0.1,r=1) # Use L=200
+#' VisualizeQC(sce)
+#'
 VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
 
   final_aris <- unlist(lapply(metadata(object)$iloreg$metrics,
@@ -416,7 +436,20 @@ setMethod("VisualizeQC", signature(object = "SingleCellExperiment"),
 #' @importFrom SingleCellExperiment reducedDim<-
 #' @importFrom S4Vectors metadata metadata<-
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#'
+#'
 RunPCA.SingleCellExperiment <- function(object, p, scale, threshold) {
+
+  if (p > metadata(object)$iloreg$L*metadata(object)$iloreg$k) {
+    stop(paste0("p larger than number of joint probabilities. Decrease p"))
+  }
 
   metadata(object)$iloreg$p <- p
   metadata(object)$iloreg$scale.pca <- scale
@@ -476,6 +509,15 @@ setMethod("RunPCA", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom stats sd
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' PCAElbowPlot(sce)
+#'
 PCAElbowPlot.SingleCellExperiment <- function(object, return.plot) {
 
   df <- matrix(apply(reducedDim(object,"PCA"),2,sd),
@@ -522,6 +564,15 @@ setMethod("PCAElbowPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom umap umap
 #' @importFrom SingleCellExperiment reducedDim reducedDim<-
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- RunUMAP(sce)
+#'
 RunUMAP.SingleCellExperiment <- function(object) {
 
   umap_out <- umap(reducedDim(object,"PCA"))
@@ -556,6 +607,15 @@ setMethod("RunUMAP", signature(object = "SingleCellExperiment"),
 #'
 #' @importFrom Rtsne Rtsne
 #' @importFrom SingleCellExperiment reducedDim reducedDim<-
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- RunTSNE(sce)
 #'
 RunTSNE.SingleCellExperiment <- function(object, perplexity) {
 
@@ -592,6 +652,15 @@ setMethod("RunTSNE", signature(object = "SingleCellExperiment"),
 #' @importFrom fastcluster hclust.vector
 #' @importFrom S4Vectors metadata<-
 #' @importFrom SingleCellExperiment reducedDim
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
 #'
 HierarchicalClustering.SingleCellExperiment <- function(object) {
 
@@ -631,6 +700,16 @@ setMethod("HierarchicalClustering", signature(object = "SingleCellExperiment"),
 #' @importFrom cluster silhouette
 #' @importFrom dendextend cutree
 #' @importFrom stats as.dendrogram
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- CalculateSilhouetteInformation(sce)
 #'
 CalculateSilhouetteInformation.SingleCellExperiment <-
   function(object, K.start, K.end) {
@@ -693,6 +772,17 @@ setMethod("CalculateSilhouetteInformation", signature(object = "SingleCellExperi
 #' @import ggplot2
 #' @importFrom DescTools AUC
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- CalculateSilhouetteInformation(sce)
+#' SilhouetteCurve(sce)
+#'
 SilhouetteCurve.SingleCellExperiment <- function(object, return.plot) {
 
   sis <- metadata(object)$iloreg$silhouette.information
@@ -741,6 +831,16 @@ setMethod("SilhouetteCurve", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom dendextend cutree
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#'
 SelectKClusters.SingleCellExperiment <- function(object, K) {
 
   clustering <- factor(cutree(as.dendrogram(metadata(object)$iloreg$hc),k=K))
@@ -778,6 +878,17 @@ setMethod("SelectKClusters", signature(object = "SingleCellExperiment"),
 #' @keywords merge clusters
 #'
 #' @importFrom S4Vectors metadata metadata<-
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' sce <- MergeClusters(sce,clusters.to.merge=c(1,2),new.name="merged1")
 #'
 MergeClusters.SingleCellExperiment <- function(object,
                                                clusters.to.merge,
@@ -836,6 +947,17 @@ setMethod("MergeClusters", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata metadata<-
 #' @importFrom plyr mapvalues
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' sce <- RenameAllClusters(sce,new.cluster.names=LETTERS[seq_len(5)])
+#'
 RenameAllClusters.SingleCellExperiment <- function(object, new.cluster.names) {
 
   new.cluster.names <- as.character(new.cluster.names)
@@ -882,6 +1004,17 @@ setMethod("RenameAllClusters", signature(object = "SingleCellExperiment"),
 #' @keywords rename one cluster
 #'
 #' @importFrom S4Vectors metadata metadata<-
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' sce <- RenameCluster(sce,1,"cluster1")
 #'
 RenameCluster.SingleCellExperiment <- function(object,
                                                old.cluster.name,
@@ -947,6 +1080,18 @@ setMethod("RenameCluster", signature(object = "SingleCellExperiment"),
 #' @import ggplot2
 #' @importFrom scales muted
 #' @importFrom cowplot plot_grid
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- RunTSNE(sce)
+#' GeneScatterPlot(sce,"CD14",dim.reduction.type="tsne")
+#' sce <- RunUMAP(sce)
+#' GeneScatterPlot(sce,"CD14",dim.reduction.type="umap")
 #'
 GeneScatterPlot.SingleCellExperiment <- function(object,
                                                  genes,
@@ -1113,6 +1258,20 @@ setMethod("GeneScatterPlot", signature(object = "SingleCellExperiment"),
 #' @import ggplot2
 #' @importFrom stats median
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' sce <- RunTSNE(sce)
+#' ClusteringScatterPlot(sce,"manual",dim.reduction.type="tsne")
+#' sce <- RunUMAP(sce)
+#' ClusteringScatterPlot(sce,"manual",dim.reduction.type="umap")
+#'
 ClusteringScatterPlot.SingleCellExperiment <- function(object,
                                                        clustering.type,
                                                        return.plot,
@@ -1249,6 +1408,17 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @importFrom SingleCellExperiment logcounts
 #' @importFrom stats wilcox.test p.adjust
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' gene_markes <- FindAllGeneMarkers(sce)
 #'
 FindAllGeneMarkers.SingleCellExperiment <- function(object,
                                                     clustering.type,
@@ -1467,6 +1637,18 @@ setMethod("FindAllGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @importFrom stats wilcox.test p.adjust
 #' @importFrom SingleCellExperiment logcounts
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' gene_markes_1 <- FindGeneMarkers(sce,clusters.1=1)
+#' gene_markes_1_vs_2 <- FindGeneMarkers(sce,clusters.1=1,clusters.2=2)
 #'
 FindGeneMarkers.SingleCellExperiment <- function(object,
                                                  clusters.1,
@@ -1688,6 +1870,17 @@ setMethod("FindGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @importFrom cowplot plot_grid
 #' @importFrom SingleCellExperiment logcounts
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' VlnPlot(sce,genes=c("CD3D","CD79A","CST3"))
+#'
 VlnPlot.SingleCellExperiment <- function(object,
                                          clustering.type,
                                          genes,
@@ -1757,6 +1950,20 @@ setMethod("VlnPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom S4Vectors metadata
 #' @import pheatmap
 #' @importFrom SingleCellExperiment logcounts
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,r=1,k=5) # Use L=200
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' gene_markers <- FindAllGeneMarkers(sce,log2fc.threshold = 0.5,min.pct = 0.5)
+#' top10_log2FC <- SelectTopGenes(gene_markers,top.N=10,
+#' criterion.type="log2FC",reverse=FALSE)
+#' GeneHeatmap(sce,clustering.type = "manual",
+#'  gene.markers = top10_log2FC)
 #'
 GeneHeatmap.SingleCellExperiment <- function(object,
                                              clustering.type,
@@ -1920,6 +2127,23 @@ setMethod("AnnotationScatterPlot", signature(object = "SingleCellExperiment"),
 #' @importFrom reshape2 melt
 #' @importFrom SingleCellExperiment logcounts
 #' @importFrom stats runif
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are used just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,r=1,k=5) # Use L=200
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' gene_markers <- FindAllGeneMarkers(sce,log2fc.threshold = 0.5,min.pct = 0.5)
+#' top10_log2FC <- SelectTopGenes(gene_markers,top.N=10,
+#' criterion.type="log2FC",reverse=FALSE)
+#' GeneHeatmap(sce,clustering.type = "manual",
+#'  gene.markers = top10_log2FC)
+#' ## Dropout curve for cells of clusters 1 and 2. Mark and name three genes.
+#' GeneDropoutRatePlot(sce, c("CD3D","CD14","CD79A"),clusters=1,2)
 #'
 GeneDropoutRatePlot.SingleCellExperiment <- function(object,
                                                      genes,

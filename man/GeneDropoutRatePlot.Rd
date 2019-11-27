@@ -50,6 +50,24 @@ a gene is differentially expressed or not, since differentially expressed
 genes are likely to be above the expected curve. Cells can be filtered based
 on clustering before calculating the values.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are used just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,r=1,k=5) # Use L=200
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+gene_markers <- FindAllGeneMarkers(sce,log2fc.threshold = 0.5,min.pct = 0.5)
+top10_log2FC <- SelectTopGenes(gene_markers,top.N=10,
+criterion.type="log2FC",reverse=FALSE)
+GeneHeatmap(sce,clustering.type = "manual",
+ gene.markers = top10_log2FC)
+## Dropout curve for cells of clusters 1 and 2. Mark and name three genes.
+GeneDropoutRatePlot(sce, c("CD3D","CD14","CD79A"),clusters=1,2)
+
+}
 \keyword{average}
 \keyword{curve}
 \keyword{dropout}

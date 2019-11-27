@@ -24,6 +24,15 @@ ggplot2 object if \code{return.plot=TRUE}
 Draw violin plots of the terminal projection accuracy,
 the number of epochs/iterations and the average pairwise ARI values.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,k=5,C=0.1,r=1) # Use L=200
+VisualizeQC(sce)
+
+}
 \keyword{ARI}
 \keyword{QC}
 \keyword{accuracy}

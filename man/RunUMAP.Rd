@@ -20,6 +20,16 @@ object of \code{SingleCellExperiment} class
 Run nonlinear dimensionality reduction using UMAP with
 the PCA-transformed consensus matrix as input.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- RunUMAP(sce)
+
+}
 \keyword{Approximation}
 \keyword{Manifold}
 \keyword{Projection}

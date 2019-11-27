@@ -30,5 +30,17 @@ ggplot2 object if return.plot=TRUE
 The VlnPlot function enables visualizing expression levels of a gene,
 or multiple genes, across clusters using Violin plots.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+VlnPlot(sce,genes=c("CD3D","CD79A","CST3"))
+
+}
 \keyword{plot}
 \keyword{violin}

@@ -99,6 +99,19 @@ two arbitrary combinations of clusters, e.g. 1_2 vs. 3_4_5.
 Gene and cell filters can be applied to accelerate
 the analysis, but this might lead to missing weak signals.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+gene_markes_1 <- FindGeneMarkers(sce,clusters.1=1)
+gene_markes_1_vs_2 <- FindGeneMarkers(sce,clusters.1=1,clusters.2=2)
+
+}
 \keyword{DE}
 \keyword{analysis}
 \keyword{differential}

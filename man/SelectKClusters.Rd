@@ -21,5 +21,16 @@ object of \code{SingleCellExperiment} class
 \description{
 Selects K clusters from the dendrogram.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+
+}
 \keyword{clusters}
 \keyword{select}

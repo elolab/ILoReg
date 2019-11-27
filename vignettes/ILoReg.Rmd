@@ -61,16 +61,14 @@ The only required input for `ILoReg` is a normalized gene expression matrix with
 
 
 ```{r}
-# data(pbmc3k_1000)
-
+library(ILoReg)
 library(SingleCellExperiment)
-sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_1000))
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
 ```
 
 
 ```{r}
-library(ILoReg)
-# sce <- PrepareILoReg(sce)
+sce <- PrepareILoReg(sce)
 ```
 
 
@@ -95,16 +93,16 @@ In the following, we give a brief summary of the parameters.
 # Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 tictoc::tic()
 set.seed(1)
-sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 200, r = 5, C = 0.3, 
+sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 50, r = 5, C = 0.3, 
                       reg.type = "L1",
                       threads = 0)
 tictoc::toc()
 # At this point saving the results is recommended.
-saveRDS(sce,file = "~/pbmc3k_1000_iloreg.rds")
+saveRDS(sce,file = "~/pbmc3k_500_iloreg.rds")
 ```
 
 ```{r}
-sce <- readRDS(file = "~/pbmc3k_1000_iloreg.rds")
+# sce <- readRDS(file = "~/pbmc3k_500_iloreg.rds")
 ```
 
 

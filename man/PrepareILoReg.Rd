@@ -21,6 +21,12 @@ This function prepares the \code{SingleCellExperiment} object for
 \code{ILoReg} analysis. The only required input is an object of class
 \code{SingleCellExperiment} with at least data in the \code{logcounts} slot.
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+
+}
 \keyword{clean}
 \keyword{data}
 \keyword{iloreg}

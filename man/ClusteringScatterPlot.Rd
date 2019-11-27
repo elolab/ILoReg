@@ -53,6 +53,21 @@ ggplot2 object if return.plot=TRUE
 ClusteringScatterPlot function enables visualizing the clustering over
 nonliner dimensionality reduction (t-SNE or UMAP).
 }
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+sce <- RunTSNE(sce)
+ClusteringScatterPlot(sce,"manual",dim.reduction.type="tsne")
+sce <- RunUMAP(sce)
+ClusteringScatterPlot(sce,"manual",dim.reduction.type="umap")
+
+}
 \keyword{clustering}
 \keyword{dimensionality}
 \keyword{nonlinear}
