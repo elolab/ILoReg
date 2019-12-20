@@ -6,9 +6,21 @@
 \alias{VlnPlot,SingleCellExperiment-method}
 \title{Gene expression visualization using violin plots}
 \usage{
-VlnPlot.SingleCellExperiment(object, clustering.type, genes, return.plot)
+VlnPlot.SingleCellExperiment(
+  object,
+  clustering.type,
+  genes,
+  return.plot,
+  rotate.x.axis.labels
+)
 
-\S4method{VlnPlot}{SingleCellExperiment}(object, clustering.type = "manual", genes = NULL, return.plot = FALSE)
+\S4method{VlnPlot}{SingleCellExperiment}(
+  object,
+  clustering.type = "manual",
+  genes = NULL,
+  return.plot = FALSE,
+  rotate.x.axis.labels = FALSE
+)
 }
 \arguments{
 \item{object}{of \code{SingleCellExperiment} class}
@@ -20,7 +32,10 @@ and "optimal" to the clustering formed using the
 
 \item{genes}{a character vector denoting the gene names that are visualized}
 
-\item{return.plot}{return.plot whether to return the ggplot2 object
+\item{return.plot}{return.plot whether to return the ggplot2 object}
+
+\item{rotate.x.axis.labels}{a logical denoting whether the x-axis
+labels should be rotated 90 degrees.
 or just draw it. Default is \code{FALSE}.}
 }
 \value{

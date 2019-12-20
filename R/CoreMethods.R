@@ -370,7 +370,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
   p1 <- ggplot(df1, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE,fill = "#F8766D") +
     theme_bw() +
-    ylab("Terminal projection accuracy") +
+    ylab("Projection accuracy of ICP") +
     xlab("") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
@@ -389,7 +389,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
   p3 <- ggplot(df3, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE, fill = "#F8766D") +
     theme_bw() +
-    ylab("Average Pairwise ARI") +
+    ylab("Average pairwise ARI") +
     xlab("") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
@@ -1857,6 +1857,8 @@ setMethod("FindGeneMarkers", signature(object = "SingleCellExperiment"),
 #' "CalculateSilhouetteInformation" function. Default is "manual".
 #' @param genes a character vector denoting the gene names that are visualized
 #' @param return.plot return.plot whether to return the ggplot2 object
+#' @param rotate.x.axis.labels a logical denoting whether the x-axis
+#' labels should be rotated 90 degrees.
 #' or just draw it. Default is \code{FALSE}.
 #'
 #' @name VlnPlot
@@ -1884,7 +1886,8 @@ setMethod("FindGeneMarkers", signature(object = "SingleCellExperiment"),
 VlnPlot.SingleCellExperiment <- function(object,
                                          clustering.type,
                                          genes,
-                                         return.plot) {
+                                         return.plot,
+                                         rotate.x.axis.labels) {
 
 
   if (clustering.type=="manual")
@@ -1907,7 +1910,15 @@ VlnPlot.SingleCellExperiment <- function(object,
   df$Cluster <- rep(as.character(clustering),length(genes))
   df$Cluster <- factor(df$Cluster)
 
-  plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes_string(x='Cluster', y='Expression', fill='Cluster'))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none"))
+
+  if (rotate.x.axis.labels)
+  {
+    plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes_string(x='Cluster', y='Expression', fill='Cluster'))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none",axis.text.x = element_text(angle = 90, hjust = 1)))
+  } else {
+    plotlist <- lapply(genes,function(x) ggplot(df[df$gene==x,], aes_string(x='Cluster', y='Expression', fill='Cluster'))+geom_violin(trim=TRUE)+geom_jitter(height = 0, width = 0.1)+theme_classic()+ggtitle(x)+theme(plot.title = element_text(hjust = 0.5),legend.position = "none"))
+
+  }
+
 
   p <- plot_grid(plotlist = plotlist)
 
@@ -2094,145 +2105,3 @@ AnnotationScatterPlot.SingleCellExperiment <- function(object,
 setMethod("AnnotationScatterPlot", signature(object = "SingleCellExperiment"),
           AnnotationScatterPlot.SingleCellExperiment)
 
-#' @title Dropout rate versus average non-zero expression
-#'
-#' @description
-#' The GeneDropoutRatePlot function enables visualizion of dropout rates
-#' (fraction of cells expressing a gene) against the average non-zero
-#' expression values. This function can aid the user to determinine if
-#' a gene is differentially expressed or not, since differentially expressed
-#' genes are likely to be above the expected curve. Cells can be filtered based
-#' on clustering before calculating the values.
-#'
-#' @param object of \code{SingleCellExperiment} class
-#' @param genes a character vector of the genes to visualize over
-#' the dropout rate curve
-#' @param return.plot return.plot whether to return the ggplot2 object or
-#' just draw it. Default is \code{FALSE}.
-#' @param clusters use data from these clusters only.
-#' Default is \code{NULL}.
-#' @param clustering.type "manual" or "optimal". "manual" refers to the
-#' clustering formed using the "SelectKClusters" function and "optimal"
-#' to the clustering using the "CalculateSilhouetteInformation" function.
-#' Default is \code{manual}.
-#'
-#' @name GeneDropoutRatePlot
-#'
-#' @return ggplot2 object if return.plot=TRUE
-#'
-#' @keywords dropout rate curve non-zero average expression gene
-#'
-#' @importFrom S4Vectors metadata
-#' @import ggplot2
-#' @importFrom reshape2 melt
-#' @importFrom SingleCellExperiment logcounts
-#' @importFrom stats runif
-#'
-#' @examples
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
-#' sce <- PrepareILoReg(sce)
-#' ## These settings are used just to accelerate the example, use the defaults.
-#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,r=1,k=5) # Use L=200
-#' sce <- RunPCA(sce,p=5)
-#' sce <- HierarchicalClustering(sce)
-#' sce <- SelectKClusters(sce,K=5)
-#' gene_markers <- FindAllGeneMarkers(sce,log2fc.threshold = 0.5,min.pct = 0.5)
-#' top10_log2FC <- SelectTopGenes(gene_markers,top.N=10,
-#' criterion.type="log2FC",reverse=FALSE)
-#' GeneHeatmap(sce,clustering.type = "manual",
-#'  gene.markers = top10_log2FC)
-#' ## Dropout curve for cells of clusters 1 and 2. Mark and name three genes.
-#' GeneDropoutRatePlot(sce, c("CD3D","CD14","CD79A"),clusters=1,2)
-#'
-GeneDropoutRatePlot.SingleCellExperiment <- function(object,
-                                                     genes,
-                                                     return.plot,
-                                                     clusters,
-                                                     clustering.type) {
-
-
-  if (is.null(clusters))
-  {
-    normalized_data <- logcounts(object)
-
-  } else {
-
-    if (clustering.type=="manual")
-    {
-      clustering <- metadata(object)$iloreg$clustering.manual
-    } else if (clustering.type=="optimal") {
-      clustering <- metadata(object)$iloreg$clustering.optimal
-    } else {
-      clustering <- metadata(object)$iloreg$clustering.manual
-      cat("clustering.type='manual'")
-    }
-
-    cells.to.use <- names(clustering)[clustering %in% clusters]
-    print(length(cells.to.use))
-
-    normalized_data <- logcounts(object)[,cells.to.use]
-
-  }
-
-  dropout_rates <- apply(normalized_data,1,function(x) sum(x==0))/ncol(normalized_data)
-
-  average_nonzero_expression <- apply(normalized_data,1,function(x) mean(x[x!=0]))
-
-  df <- melt(dropout_rates)
-  df$average_nonzero_expression <- average_nonzero_expression
-  df$logical <- rownames(df) %in% genes
-
-
-  p <- ggplot(data=df, aes_string(x='average_nonzero_expression', y='value', color='logical')) +
-    geom_point()+
-    theme_bw()+
-    scale_colour_discrete(name="gene",labels=c("FALSE","TRUE")) +
-    ylab("Dropout rate")+
-    xlab("Average non-zero expression")+
-    theme(legend.position = "none")
-
-  genes <- genes[order(df[genes,"value"])]
-
-  dropout_previous_gene <- NA
-  for (gene in genes)
-  {
-    text_annotate_x_space <- 0.25
-    if (nchar(gene) > 7)
-    {
-      text_annotate_x_space <- 0.5
-    }
-    seg_length <- runif(1,0.1,2)
-    if (is.na(dropout_previous_gene))
-    {
-      p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
-        annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"], label = gene)
-    } else {
-      if ((dropout_previous_gene - df[gene,"value"]) < 0.05)
-      {
-        random_y_space <- runif(1,-0.25,0.25)
-        p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"]+random_y_space, colour = "black") +
-          annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"]+random_y_space, label = gene)
-
-      } else {
-        p <- p + annotate("segment", x = df[gene,"average_nonzero_expression"], xend = df[gene,"average_nonzero_expression"]+seg_length, y = df[gene,"value"], yend = df[gene,"value"], colour = "black") +
-          annotate("text", x = df[gene,"average_nonzero_expression"]+seg_length+text_annotate_x_space, y = df[gene,"value"], label = gene)
-      }
-    }
-    dropout_previous_gene <- df[gene,"value"]
-  }
-
-
-  if (return.plot)
-  {
-    return(p)
-  } else {
-    print(p)
-  }
-
-}
-
-#' @rdname GeneDropoutRatePlot
-#' @aliases GeneDropoutRatePlot
-setMethod("GeneDropoutRatePlot", signature(object = "SingleCellExperiment"),
-          GeneDropoutRatePlot.SingleCellExperiment)

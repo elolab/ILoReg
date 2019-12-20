@@ -1,9 +1,9 @@
 Package: ILoReg
 Type: Package
-Title: ILoReg: high-precision cell population identification from scRNA-Seq data
+Title: ILoReg enables high-precision cell population identification from scRNA-Seq data
 Version: 0.99.0
 Maintainer: Johannes Smolander <johannes.smolander@gmail.com>
-Description: ILoReg is a tool for identification of cell populations with subtle transcriptomic differences from scRNA-Seq data.
+Description: ILoReg is a tool for identification of cell populations with subtle transcriptomic differences from scRNA-seq data.
 Authors@R: c(person("Johannes", "Smolander",
              email = "johannes.smolander@gmail.com",
              role=c("cre", "aut")),
@@ -23,7 +23,7 @@ Imports: Matrix, parallel, foreach,
 Depends: R (>= 4.0)
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.0.0
+RoxygenNote: 7.0.2
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 biocViews: SingleCell, Software, Clustering, DimensionReduction, 

@@ -159,7 +159,8 @@ setGeneric("VlnPlot", signature = "object",
            function(object,
                     clustering.type = "manual",
                     genes = NULL,
-                    return.plot = FALSE) {
+                    return.plot = FALSE,
+                    rotate.x.axis.labels=FALSE) {
   standardGeneric("VlnPlot")
 })
 
@@ -182,12 +183,3 @@ setGeneric("AnnotationScatterPlot", signature = "object",
   standardGeneric("AnnotationScatterPlot")
 })
 
-#' @export
-setGeneric("GeneDropoutRatePlot", signature = "object",
-           function(object,
-                    genes = NULL,
-                    return.plot = FALSE,
-                    clusters = NULL,
-                    clustering.type = "manual") {
-  standardGeneric("GeneDropoutRatePlot")
-})

@@ -24,7 +24,7 @@ opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
 
 
 # Introduction to the method
-`ILoReg` (abbr. for **I**terative **Lo**gistic **Reg**ression) is a tool for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study ([Article title](https://gitlab.utu.fi/pajosm/iloreg)), we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, `ILoReg` can identify subpopulations that are differentiable by only a single gene.
+`ILoReg` (abbr. for **I**terative **Lo**gistic **Reg**ression) is a tool for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [1], we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, `ILoReg` can identify subpopulations that are differentiable by only a single gene.
 
 The figure below depicts the workflows of `ILoReg` and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
 
@@ -44,7 +44,7 @@ library(devtools)
 creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
                             "~/../.ssh/id_rsa")
 devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
-                      credentials = creds)
+                      credentials = creds,ref = "85196be6")
 ```
 
 
@@ -54,60 +54,50 @@ In the following, we go through the different steps of `ILoReg`'s workflow and d
 
 
 
-### Setup a SingleCellExperiment object and prepare it for ILoReg analysis
+## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
 
 The only required input for `ILoReg` is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. **Please note that the method has been designed to work with sparse data, i.e. with lots of zero values. If for example the features of your dataset have been standardized, the method is likely to work much slower and require more RAM.**
 
 
 
 ```{r}
-library(ILoReg)
-library(SingleCellExperiment)
+suppressMessages(library(ILoReg))
+suppressMessages(library(SingleCellExperiment))
+suppressMessages(library(cowplot))
 sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
-```
-
-
-```{r}
 sce <- PrepareILoReg(sce)
 ```
 
 
-### Run ICP clustering algorithm *L* times
+## Run ICP clustering algorithm *L* times
 
-Next comes by far the most computationally demanding part of the pipeline, 
-in which *L* ICP solutions are computed with different random seeds. This step lasted ~2 hr with three threads on a laptop. 
+Running $L$ ICP runs in parallel is the most computationally demanding part of the pipeline, 
+in which *L* ICP solutions are computed.
 
 In the following, we give a brief summary of the parameters.
 
-* $k$: The number of clusters in ICP. Default $15$. A lower value generates less cluster probabilities. Increasing $k$ is the easiest way to increase the complexity of the outcome, i.e. more subpopulations with subtle differences emerge.
-* $C$: A positive real number, the cost of constraints violation in the L1-regularized logistic regression model from the [LIBLINEAR library](https://www.csie.ntu.edu.tw/~cjlin/liblinear/): $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{l} \log (1+ e^{-y_i w^T w})$$ Default 0.3. Decreasing leads to more stringent feature selection, i.e. less genes are selected that are used to train the projection classifier.
-* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n=Nd/k$), where $N$ is the total number of cells. Default $0.3$. Our recommendation is to not increase $d$ above $0.5$, as this will lead to more dissimilar ICP runs, which in turn induces less variation into the consensus solution. 
-* $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. Default $5$. Increasing recommended with a significantly larger sample size (tens of thousands).
+* $k$: The number of initial clusters in ICP. Default $15$. A lower value generates less cluster probabilities. Along with decreasing $d$ , increasing $k$ is the easiest way to increase the complexity of the outcome, i.e. more subpopulations with subtle differences emerge.
+* $C$: A positive real number, the cost of constraints violation in the L1-regularized logistic regression model from the [LIBLINEAR library](https://www.csie.ntu.edu.tw/~cjlin/liblinear/): $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{l} \log (1+ e^{-y_i w^T w})$$ Default $0.3$. Decreasing leads to more stringent feature selection, i.e. less genes are selected that are used to train the projection classifier.
+* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n=Nd/k$), where $N$ is the total number of cells. Default $0.3$. Our recommendation is to decrease $d$ below $0.2$, as this leads to ICP becoming unstable. Increasing $d$, on the other hand, leads to more dissimilar ICP runs and can be used to decrease the heterogeneity of the result.
+* $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. Default $5$.
 * $L$: Number of ICP runs. Default $200$. 
 * $type$: "L1" or "L2". "L2" denotes L2-regularization (Tikhonov/Ridge regularization), which was not investigated in the manuscript. Default "L1".
-* $seed$: To make the results reproducible, a positive integer that specifies the random seed to be set before randomly generating random seeds for each parallel task. Default $1$.
-* $threads$: The number of threads to use in parallel computing. Default $0$, which uses all available threads but one. Parallelization can be disabled with $1$. 
+* $threads$: The number of threads to use in parallel computing. Default is $0$ to use all available threads but one. The parallelization can be disabled by setting $threads=1$. 
 
 
-```{r eval = FALSE}
-# Run ICP L times. This is by far the slowest step of the workflow and parallel processing can be used to greatly speed it up.
-tictoc::tic()
+```{r eval = TRUE}
+# Run ICP L times. This is  the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 set.seed(1)
-sce <- RunParallelICP(object = sce, k = 15, d = 0.3, L = 50, r = 5, C = 0.3, 
-                      reg.type = "L1",
-                      threads = 0)
-tictoc::toc()
+sce <- RunParallelICP(object = sce, k = 15,
+                      d = 0.3, L = 30, 
+                      r = 5, C = 0.3, 
+                      reg.type = "L1", threads = 0)
 # At this point saving the results is recommended.
 saveRDS(sce,file = "~/pbmc3k_500_iloreg.rds")
 ```
 
-```{r}
-# sce <- readRDS(file = "~/pbmc3k_500_iloreg.rds")
-```
 
-
-
-### Quality control
+## Quality control
 
 Next, we consider two quality control measures of ICP that can aid detecting issues with the ICP analysis.
 
@@ -116,13 +106,13 @@ First, the terminal projection accuracy that denotes the adjusted Rand index (AR
 Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower average pairwise ARI and smaller $k$ to higher average pairwise ARI. The relation of $C$ and $r$ with the average pairwise ARI is not as unambiguous as with the projection accuracy.
 
 ```{r, fig.height=4, fig.width=9, out.width = '100%',fig.align = "center"}
-# Draw violin plots of the terminal clustering projection accuracy, the number of epochs and the average pairwise ARI.
+# Draw violin plots of the projection accuracy of ICP, the number of epochs and the average pairwise ARI.
 # Each data point represents a ICP run.
 VisualizeQC(sce,return.plot = F)
 ```
 
 
-### PCA transformation of the joint probability matrix
+## PCA transformation of the joint probability matrix
 
 The $L$ probability matrices are merged into a joint probability matrix, which is transformed into a lower dimension $p$ by principal component analysis (PCA). At this point, the user can filter out ICP runs that achieved lower terminal projection accuracy. Moreover, scaling the probabilities to unit-variance is supported.
 
@@ -131,14 +121,14 @@ sce <- RunPCA(sce,p=50,scale = FALSE,threshold = 0)
 ```
 
 
-PCA transformation requires the user to select the number of principal components, for which we selected default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects $p$.
+PCA transformation requires the user to select the number of principal components, for which we selectedt the default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects $p$. In this case it would be close to $p=10$.
 
 ```{r, fig.height=5, fig.width=7, out.width = '100%',fig.align = "center"}
 PCAElbowPlot(sce)
 ```
 
 
-### Nonlinear dimensionality reduction
+## Nonlinear dimensionality reduction
 
 To visualize the data in two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. 
 The input for this step is the $p$-dimensional PCA-rotated data matrix.
@@ -149,7 +139,7 @@ sce <- RunTSNE(sce,perplexity=30)
 ```
 
 
-### Hierarchical clustering using Ward's agglomeration
+## Hierarchical clustering using Ward's agglomeration
 
 The $p$-dimensional PCA-rotated data matrix is clustered hierarchically using the Ward's method.
 
@@ -158,27 +148,30 @@ sce <- HierarchicalClustering(sce)
 ```
 
 
-### Gene expression visualization
+## Gene expression visualization
 
 Visualize expression of CD3D (T cells), CD79A (B cells), CST3 (monocytes, dendritic cells, megakaryocytes), FCER1A (myeloid dendritic cells).
-```{r, fig.height=10, fig.width=12, out.width = '100%'}
-GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "umap")
-GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),dim.reduction.type = "tsne")
+```{r, fig.height=6, fig.width=7.2, out.width = '100%'}
+GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),
+                dim.reduction.type = "umap",
+                point.size = 0.3)
+GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),
+                dim.reduction.type = "tsne",
+                point.size = 0.3)
 
 ```
 
-### Selecting a clustering of size $K$
+## Selecting a clustering of size $K$
 
 Manually select $K=40$ clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
 ```{r}
-sce <- SelectKClusters(sce,K=20)
+sce <- SelectKClusters(sce,K=13)
 ```
 
 
 tSNE and UMAP transformations along with the optimal and manual clusterings.
 ```{r FigUMAP_TSNE, echo=TRUE, fig.height=5, fig.width=12, out.width = '100%'}
 # Use plot_grid function from the cowplot R package to combine to plots into one.
-library(cowplot)
 plot_grid(ClusteringScatterPlot(sce,
                                 dim.reduction.type = "umap",
                                 return.plot = T,
@@ -194,31 +187,11 @@ plot_grid(ClusteringScatterPlot(sce,
 ```
 
 
-### Merging clusters
 
-Identifying rare cell types, e.g. megakaryocytes or plasmacytoid dendritic cells, might require selecting a high value of $K$, but this in turn can form clusters that are not meaningful. Therefore, `ILoReg` provides a simple function for combining clusters.
-```{r Fig0, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%', eval = FALSE}
-# Visualization before merging
-tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
-umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",return.plot = T,title = "Before merging clusters",show.legend = FALSE)
-# Merge multiple sets of clusters
-sce <- MergeClusters(sce,clusters.to.merge = c(17,38),new.name = "m1")
-sce <- MergeClusters(sce,clusters.to.merge = c(34,7,8),new.name = "m2")
-sce <- MergeClusters(sce,clusters.to.merge = c(33,35),new.name = "m3")
-sce <- MergeClusters(sce,clusters.to.merge = c(4,9),new.name = "m4")
-sce <- MergeClusters(sce,clusters.to.merge = c(27,20,18,30,31,11),new.name = "m5")
-sce <- MergeClusters(sce,clusters.to.merge = c(22,36,16,12),new.name = "m6")
-# Visualization after merging
-tsne_after <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",return.plot = T,title = "After merging clusters",show.legend = FALSE)
-umap_after <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",return.plot = T,title = "After merging clusters",show.legend = FALSE)
-plot_grid(tsne_before,tsne_after,umap_before,umap_after)
-```
-
-
-### Identification of gene markers
+## Identification of gene markers
 
 `ILoReg` provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 
 gene_markers <- FindAllGeneMarkers(sce,
                                    clustering.type = "manual",
@@ -229,81 +202,101 @@ gene_markers <- FindAllGeneMarkers(sce,
                                    pseudocount.use = 1,
                                    min.cells.group = 3,
                                    return.thresh = 0.01,
-                                   only.pos = FALSE,max.cells.per.cluster = NULL)
+                                   only.pos = TRUE,
+                                   max.cells.per.cluster = NULL)
 
 ```
 
 
-### Selecting top genes based on log2 fold-change
+## Selecting top genes based on log2 fold-change
 
 Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
-```{r, eval = FALSE}
-top10_log2FC <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "log2FC",reverse = FALSE)
-top1_log2FC <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "log2FC",reverse = FALSE)
-top10_adj.p.value <- SelectTopGenes(gene_markers,top.N = 10,criterion.type = "adj.p.value",reverse = TRUE)
-top1_adj.p.value <- SelectTopGenes(gene_markers,top.N = 1,criterion.type = "adj.p.value",reverse = TRUE)
+```{r, eval = TRUE}
+top10_log2FC <- SelectTopGenes(gene_markers,
+                               top.N = 10,
+                               criterion.type = "log2FC",
+                               reverse = FALSE)
+top1_log2FC <- SelectTopGenes(gene_markers,
+                              top.N = 1,
+                              criterion.type = "log2FC",
+                              reverse = FALSE)
+top10_adj.p.value <- SelectTopGenes(gene_markers,
+                                    top.N = 10,
+                                    criterion.type = "adj.p.value",
+                                    reverse = TRUE)
+top1_adj.p.value <- SelectTopGenes(gene_markers,
+                                   top.N = 1,
+                                   criterion.type = "adj.p.value",
+                                   reverse = TRUE)
 ```
 
 
 
-### Gene expression scatter plot
+## Gene expression scatter plot
 
 Visualize gene expression levels of cells over t-SNE or UMAP visualization.
 
-```{r FigTop1Scatter, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%', eval = FALSE}
-GeneScatterPlot(sce,genes = unique(top1$gene),dim.reduction.type = "tsne",point.size = 0.7)
+```{r FigTop1Scatter, echo=TRUE, fig.height=12, fig.width=16, out.width = '100%', eval = TRUE}
+GeneScatterPlot(sce,
+                genes = unique(top1_log2FC$gene),
+                dim.reduction.type = "tsne",
+                point.size = 0.5)
 ```
 
 
-```{r FigTop1Scatter2, echo=TRUE, fig.height=16, fig.width=20, out.width = '100%', eval = FALSE}
-GeneScatterPlot(sce,genes = unique(top1$gene),dim.reduction.type = "umap",point.size = 0.7)
-```
-
-
-### Gene marker heatmap
+## Gene marker heatmap
 
 GeneHeatmap function enables visualizing gene markers in a heatmap, where cells and genes are grouped by the clustering.
 
-```{r FigHM, echo=TRUE, fig.height=15, fig.width=15, out.width = '100%', eval = FALSE}
+```{r FigHM1, echo=TRUE, fig.height=15, fig.width=15, out.width = '100%', eval = FALSE}
+GeneHeatmap(sce,
+            clustering.type = "manual",
+            gene.markers = top10_log2FC)
+
+```
+
+
+## Rename clusters
+
+```{r}
+sce <- RenameAllClusters(sce,
+                         new.cluster.names = c("GZMK+/CD8+ T cells",
+                                               "IGKC+ B cells",
+                                               "Naive CD4+ T cells",
+                                               "NK cells",
+                                               "CD16+ monocytes",
+                                               "CD8+ T cells",
+                                               "CD14+ monocytes",
+                                               "IGLC+ B cells",
+                                               "Intermediate monocytes",
+                                               "IGKC+/IGLC+ B cells",
+                                               "Memory CD4+ T cells",
+                                               "Naive CD8+ T cells",
+                                               "Dendritic cells"))
+```
+
+
+## Gene marker heatmap with renamed clusters
+
+GeneHeatmap function enables visualizing gene markers in a heatmap, where cells and genes are grouped by the clustering.
+
+```{r FigHM2, echo=TRUE, fig.height=15, fig.width=15, out.width = '100%', eval = TRUE}
 GeneHeatmap(sce,clustering.type = "manual",gene.markers = top10_log2FC)
 
 ```
 
 
-### Identification of differentially expressed genes between two arbitrary sets of clusters
-
-```{r, eval = FALSE}
-gene_markers_IGLL5_positive_b_cell_VS_negative <- FindGeneMarkers(sce,
-                                                                  clusters.1 = c(29,15,14),
-                                                                  clusters.2 = c(26,2),
-                                                                  logfc.threshold = 0,
-                                                                  min.pct = 0,
-                                                                  return.thresh = 0.01,
-                                                                  only.pos = TRUE)
-
-gene_markers_TCL1A_positive_b_cell_VS_negative <- FindGeneMarkers(sce,
-                                                                  clusters.1 = c(26,29,15),
-                                                                  clusters.2 = c(14,2),
-                                                                  logfc.threshold = 0,
-                                                                  min.pct = 0,
-                                                                  return.thresh = 0.01,
-                                                                  only.pos = TRUE)
-
-```
-
-
-
-### Visualization of gene expression grouped by clusters with violin plots
+## Visualization of gene expression grouped by clusters with violin plots
 
 Violin plots provide a nice way to visualize gene expression across clusters. 
 
-```{r FigVlnPlot, echo=TRUE, fig.height=5, fig.width=12, out.width = '100%'}
-VlnPlot(sce,clustering.type = "manual",genes = c("CD3D","CD79A","CST3"),return.plot = F)
+```{r FigVlnPlot, echo=TRUE, fig.height=5, fig.width=8, out.width = '100%'}
+VlnPlot(sce,clustering.type = "manual",genes = c("CD3D"),return.plot = F,rotate.x.axis.labels = T)
 ```
 
 
 
-### Saving results
+## Saving results
 
 Saving the results at the end of the workflow is recommended.
 
@@ -317,7 +310,7 @@ saveRDS(sce,file = "~/pbmc3k_sce_final.rds")
 
 `ILoReg` provides additional functionality for performing tasks, which are commonly required in scRNA-seq data analysis.
 
-### Estimating optimal number of clusters
+## Estimating optimal number of clusters
 
 Estimation of the optimal number of clusters is done by calculating the average silhouette value across the cells for clusterings with different $K$ values in a range (e.g. $[2,50]$). The clustering acquired using $K$ with the highest average silhouette is saved to *clustering.optimal* slot.
 
@@ -327,21 +320,7 @@ SilhouetteCurve(sce,return.plot = F)
 ```
 
 
-### Renaming clusters
-
-Rename all clusters at once with RenameAllClusters function.
-```{r FigRenaming, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%', eval = FALSE}
-sce <- SelectKClusters(sce,K=20)
-tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
-umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
-sce <- RenameAllClusters(sce,new.cluster.names = LETTERS[1:sce@K.manual])
-tsne_after <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
-umap_after <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
-plot_grid(tsne_before,tsne_after,umap_before,umap_after)
-```
-
-
-Rename one cluster with RenameCluster function.
+## Rename one cluster with RenameCluster function.
 ```{r FigRenaming2, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%',eval = FALSE}
 sce <- SelectKClusters(sce,K=20)
 tsne_before <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "Before renaming",show.legend = FALSE,return.plot = TRUE)
@@ -349,11 +328,9 @@ umap_before <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "Be
 sce <- RenameCluster(sce,old.cluster.name = 1,new.cluster.name = "A")
 tsne_after <- ClusteringScatterPlot(sce,dim.reduction.type = "tsne",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
 umap_after <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "After renaming",show.legend = FALSE,return.plot = TRUE)
-plot_grid(tsne_before,tsne_after,umap_before,umap_after)
 ```
 
-
-### Visualize with custom cluster labels
+## Visualize with custom cluster labels
 
 ```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center",eval = FALSE}
 # Select a clustering with K=20 clusters
@@ -365,34 +342,58 @@ AnnotationScatterPlot(sce,annotation = custom_annotation,return.plot = F,dim.red
 ```
 
 
+## Merging clusters
 
-### Dropout curve
-
-The dropout curve can be used to infer whether a gene is likely to be differentially expressed based on its abnormally high average expression level considering its dropout rate, i.e. fraction cells not expressing the gene. Genes that are differentially expressed in a population of cells are likely to be located above the expected curve [1].
-
-We investigate how four B cell marker genes are situated in the dropout curve. *CD79A* is expressed in all B cells, but the other three genes appear to be differentially expressed.
-
-```{r, echo=TRUE, fig.height=10, fig.width=12, out.width = '100%'}
-GeneScatterPlot(sce,genes = c("CD79A","IGLL5","TCL1A","VPREB3"),dim.reduction.type = "tsne",point.size = 0.7)
-```
-
-
-
-From the dropout curve below we can indeed see, that *CD79A* is located close to of the center of the curve. *VPREB3* is slightly above the curve, whereas *TCL1A* and *IGLL5* are positioned clearly above the center of the curve.
-
-```{r, echo=TRUE, fig.height=6, fig.width=8, out.width = '100%',fig.align = "center"}
-# Select a clustering with K=20 clusters
+```{r, eval = TRUE}
+# Merge clusters 3 and 4
 sce <- SelectKClusters(sce,K=20)
-# Investigate dropout rates and average non-zero expression of a few potential differentially genes in B cells
-GeneDropoutRatePlot(sce,genes = c("IGLL5","CD79A","TCL1A","VPREB3"),return.plot = F,clusters = c(17,11,16,19))
+sce <- MergeClusters(sce,clusters.to.merge  = c(3,4))
 ```
 
 
+
+## Identification of differentially expressed genes between two arbitrary sets of clusters
+
+```{r, eval = TRUE}
+sce <- SelectKClusters(sce,K=13)
+sce <- RenameAllClusters(sce,
+                         new.cluster.names = c("GZMK+/CD8+ T cells",
+                                               "IGKC+ B cells",
+                                               "Naive CD4+ T cells",
+                                               "NK cells",
+                                               "CD16+ monocytes",
+                                               "CD8+ T cells",
+                                               "CD14+ monocytes",
+                                               "IGLC+ B cells",
+                                               "Intermediate monocytes",
+                                               "IGKC+/IGLC+ B cells",
+                                               "Memory CD4+ T cells",
+                                               "Naive CD8+ T cells",
+                                               "Dendritic cells"))
+# Identify DE genes between naive and memory CD4+ T cells
+GM_naive_memory_CD4 <- FindGeneMarkers(sce,
+                                       clusters.1 = "Naive CD4+ T cells",
+                                       clusters.2 = "Memory CD4+ T cells",
+                                       logfc.threshold = 0.25,
+                                       min.pct = 0.25,
+                                       return.thresh = 0.01,
+                                       only.pos = TRUE)
+
+
+# Find gene markers for dendritic cells
+GM_dendritic <- FindGeneMarkers(sce,
+                                clusters.1 = "Dendritic cells",
+                                logfc.threshold = 0.25,
+                                min.pct = 0.25,
+                                return.thresh = 0.01,
+                                only.pos = TRUE)
+
+```
 
 
 # References 
 
-1. Andrews, Tallulah S., and Martin Hemberg. "M3Drop: Dropout-based feature selection for scRNASeq." Bioinformatics (2018).
+1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". BioRxiv (2020).
 
 # Contact information
 
