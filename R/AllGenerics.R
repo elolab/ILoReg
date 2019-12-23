@@ -104,7 +104,9 @@ setGeneric("GeneScatterPlot", signature = "object",
                     dim.reduction.type = "tsne",
                     point.size = 0.7,
                     title = "",
-                    plot.expressing.cells.last = FALSE) {
+                    plot.expressing.cells.last = FALSE,
+                    nrow = NULL,
+                    ncol = NULL) {
   standardGeneric("GeneScatterPlot")
 })
 

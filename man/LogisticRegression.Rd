@@ -5,14 +5,9 @@
 \title{Clustering projection using logistic regression from
 the LiblineaR R package}
 \usage{
-LogisticRegression(
-  training.sparse.matrix = NULL,
-  training.ident = NULL,
-  C = 0.3,
-  reg.type = "L1",
-  test.sparse.matrix = NULL,
-  d = 0.3
-)
+LogisticRegression(training.sparse.matrix = NULL,
+  training.ident = NULL, C = 0.3, reg.type = "L1",
+  test.sparse.matrix = NULL, d = 0.3)
 }
 \arguments{
 \item{training.sparse.matrix}{A sparse matrix (dgCMatrix) containing training

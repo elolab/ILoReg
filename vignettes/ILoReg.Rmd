@@ -24,18 +24,18 @@ opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
 
 
 # Introduction to the method
-`ILoReg` (abbr. for **I**terative **Lo**gistic **Reg**ression) is a tool for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. High-precision refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [1], we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, immune cell types that other scRNA-seq data analysis pipelines were not able to find. Moreover, `ILoReg` can identify subpopulations that are differentiable by only a single gene.
+`ILoReg` is a tool for high-resolution cell type identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [1], we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines were not able to find.
 
-The figure below depicts the workflows of `ILoReg` and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
+The figure below illustrates the workflows of `ILoReg` and a feature selection -based pipeline, which is commonly used by many scRNA-seq analysis pipelines, e.g. Seurat.
 
 ![*Figure: Analysis workflows of `ILoReg` and a feature-selection based approach*](figure.png){width=100%}
 
-Unlike most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. The second and final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
+Unlike most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs a probabilistic feature extraction, in which the Iterative Clustering Projection (ICP) clustering algorithm is run *L* times, which yields *L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: $$\displaystyle \arg \max_C ARI(C,C')$$ The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimensionality *p*. The final clustering step is performed using hierarhical clustering by the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP). Additionally, ILoReg provides user-friendly functions for the identification of differentially expressed (DE) genes and visualization of gene expression.
 
 
 # Installation
 
-The latest version of `ILoReg` can be downloaded from GitHub using utilities from devtools R package.
+The latest version of `ILoReg` can be downloaded from GitHub and installed by executing the following commands in the R console.
 
 
 ```{r eval = FALSE}
@@ -44,7 +44,7 @@ library(devtools)
 creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
                             "~/../.ssh/id_rsa")
 devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
-                      credentials = creds,ref = "85196be6")
+                      credentials = creds,ref = "eaf17d82")
 ```
 
 
@@ -56,7 +56,7 @@ In the following, we go through the different steps of `ILoReg`'s workflow and d
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
 
-The only required input for `ILoReg` is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. **Please note that the method has been designed to work with sparse data, i.e. with lots of zero values. If for example the features of your dataset have been standardized, the method is likely to work much slower and require more RAM.**
+The only required input for `ILoReg` is a normalized gene expression matrix with genes/features in rows and cells/samples in columns. The input can be of class *matrix*, *data.frame* or *dgCMatrix* and the matrix is then transformed into a sparse object of class *dgCMatrix*. Please note that the method has been designed to work with **sparse data**, i.e. with a high proportion of zero values. If, for example, the features of your dataset have been standardized, the run time and the memory usage of `ILoReg` are likely to be much higher.
 
 
 
@@ -71,57 +71,57 @@ sce <- PrepareILoReg(sce)
 
 ## Run ICP clustering algorithm *L* times
 
-Running $L$ ICP runs in parallel is the most computationally demanding part of the pipeline, 
-in which *L* ICP solutions are computed.
+Running $L$ ICP runs in parallel is the most computationally demanding part of the pipeline.
 
 In the following, we give a brief summary of the parameters.
 
-* $k$: The number of initial clusters in ICP. Default $15$. A lower value generates less cluster probabilities. Along with decreasing $d$ , increasing $k$ is the easiest way to increase the complexity of the outcome, i.e. more subpopulations with subtle differences emerge.
-* $C$: A positive real number, the cost of constraints violation in the L1-regularized logistic regression model from the [LIBLINEAR library](https://www.csie.ntu.edu.tw/~cjlin/liblinear/): $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{l} \log (1+ e^{-y_i w^T w})$$ Default $0.3$. Decreasing leads to more stringent feature selection, i.e. less genes are selected that are used to train the projection classifier.
-* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n=Nd/k$), where $N$ is the total number of cells. Default $0.3$. Our recommendation is to decrease $d$ below $0.2$, as this leads to ICP becoming unstable. Increasing $d$, on the other hand, leads to more dissimilar ICP runs and can be used to decrease the heterogeneity of the result.
-* $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. Default $5$.
-* $L$: Number of ICP runs. Default $200$. 
-* $type$: "L1" or "L2". "L2" denotes L2-regularization (Tikhonov/Ridge regularization), which was not investigated in the manuscript. Default "L1".
-* $threads$: The number of threads to use in parallel computing. Default is $0$ to use all available threads but one. The parallelization can be disabled by setting $threads=1$. 
+* $k$: The number of initial clusters in ICP. Default $15$. A lower value generates less cluster probabilities. Along with decreasing $d$ , increasing $k$ is the easiest way to increase the complexity of the outcome, i.e. more subpopulations with subtle differences are formed.
+* $C$: A positive real number that rules the trade-off between correctclassification and regularization: $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{l} \log (1+ e^{-y_i w^T w})$$ Default $0.3$. See [LIBLINEAR library](https://www.csie.ntu.edu.tw/~cjlin/liblinear/). Decreasing $C$ leads to more stringent feature selection, i.e. less genes are selected that are used to train the logistic regression classifier.
+* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n=Nd/k$), where $N$ is the total number of cells. Default $0.3$. Decreasing $d$ below $0.2$ is not recommended due to the algorithm becoming unstable ($k$ starts to decrease during the iterations). In contrast, increasing $d$ leads to more dissimilar ICP runs and can be used to decrease the cell population diversity of the outcome
+* $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. Default is $5$.
+* $L$: The number of ICP runs. Default is $200$. 
+* $type$: "L1" or "L2". "L2" denotes L2-regularization (Ridge regression), which was not investigated in our study. Default is "L1" (Lasso regresssion).
+* $threads$: The number of threads to be used in parallel computing. Default is $0$: use all available threads but one. The parallelization can be disabled by setting value $1$. 
 
 
 ```{r eval = TRUE}
-# Run ICP L times. This is  the slowest step of the workflow and parallel processing can be used to greatly speed it up.
+# ICP is stochastic. To obtain reproducible results, use set.seed().
 set.seed(1)
+# Run ICP L times. This is  the slowest step of the workflow and parallel processing can be used to greatly speed it up.
 sce <- RunParallelICP(object = sce, k = 15,
                       d = 0.3, L = 30, 
                       r = 5, C = 0.3, 
                       reg.type = "L1", threads = 0)
-# At this point saving the results is recommended.
+# At this point, saving the results is recommended.
 saveRDS(sce,file = "~/pbmc3k_500_iloreg.rds")
 ```
 
 
 ## Quality control
 
-Next, we consider two quality control measures of ICP that can aid detecting issues with the ICP analysis.
+Next, we consider two quality control measures of ICP that can aid detecting issues with the `ILoReg` analysis.
 
-First, the terminal projection accuracy that denotes the adjusted Rand index (ARI) between the clustering and its logistic regression projection at the final epoch (iteration) of ICP. Projection accuracy 1 would mean the classifier was able to predict the cluster identity of all cells correctly. Higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$. 
+The projection accuracy of ICP that denotes the adjusted Rand index (ARI) between the clustering and its  projection bylogistic regression at the final epoch of ICP. A projection accuracy $1$ would mean the classifier was able to predict the cluster membership of all cells correctly. As a general guideline, the average projection accuracy should be above $0.5$. A higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$.
 
-Second, the average pairwise ARI that measures how similar the different ICP runs are on average respect to each other. Higher $d$ leads to lower average pairwise ARI and smaller $k$ to higher average pairwise ARI. The relation of $C$ and $r$ with the average pairwise ARI is not as unambiguous as with the projection accuracy.
+The average similarity between ICP runs, measured by ARI. Since the $L$ probability matrices merged and transformed into a lower dimensionality by principal component analysis (PCA), transforming a set of correlated variables into a smaller set of uncorrelated variables, a some level of correlation among the probabilities is required to identify more cell subpopulations. A higher $d$ leads to a lower average ICP similarity and a smaller $k$ to a higher similarity. The relation of $C$ and $r$ with the metric is not unambiguous as with the projection accuracy of ICP.
 
 ```{r, fig.height=4, fig.width=9, out.width = '100%',fig.align = "center"}
-# Draw violin plots of the projection accuracy of ICP, the number of epochs and the average pairwise ARI.
-# Each data point represents a ICP run.
+# Draw violin plots of the projection accuracy of ICP, the number of epochs and the average similarity between ICP runs.
+# Each data point represents an ICP run.
 VisualizeQC(sce,return.plot = F)
 ```
 
 
 ## PCA transformation of the joint probability matrix
 
-The $L$ probability matrices are merged into a joint probability matrix, which is transformed into a lower dimension $p$ by principal component analysis (PCA). At this point, the user can filter out ICP runs that achieved lower terminal projection accuracy. Moreover, scaling the probabilities to unit-variance is supported.
+The $L$ probability matrices are merged into a joint probability matrix, which is then transformed into a lower dimensionality $p$ by PCA. At this point, the user can filter out ICP runs that achieved lower terminal projection accuracies.
 
 ```{r}
 sce <- RunPCA(sce,p=50,scale = FALSE,threshold = 0)
 ```
 
 
-PCA transformation requires the user to select the number of principal components, for which we selectedt the default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects $p$. In this case it would be close to $p=10$.
+PCA requires the user to select the number of principal components, for which we selected the default value $p=50$. The elbow plot is commonly used to seek a point of inflection, from which proximity the user selects the value of $p$. In this case it would be close to $p=10$.
 
 ```{r, fig.height=5, fig.width=7, out.width = '100%',fig.align = "center"}
 PCAElbowPlot(sce)
@@ -130,8 +130,7 @@ PCAElbowPlot(sce)
 
 ## Nonlinear dimensionality reduction
 
-To visualize the data in two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. 
-The input for this step is the $p$-dimensional PCA-rotated data matrix.
+To visualize the data in two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. The input for this step is the PCA-rorated data matrix.
 
 ```{r}
 sce <- RunUMAP(sce)
@@ -141,7 +140,7 @@ sce <- RunTSNE(sce,perplexity=30)
 
 ## Hierarchical clustering using Ward's agglomeration
 
-The $p$-dimensional PCA-rotated data matrix is clustered hierarchically using the Ward's method.
+The PCA-rotated data matrix is clustered hierarchically using the Ward's method.
 
 ```{r}
 sce <- HierarchicalClustering(sce)
@@ -150,8 +149,8 @@ sce <- HierarchicalClustering(sce)
 
 ## Gene expression visualization
 
-Visualize expression of CD3D (T cells), CD79A (B cells), CST3 (monocytes, dendritic cells, megakaryocytes), FCER1A (myeloid dendritic cells).
-```{r, fig.height=6, fig.width=7.2, out.width = '100%'}
+Visualize expression of *CD3D* (T cells), *CD79A* (B cells), *CST3* (monocytes, dendritic cells, megakaryocytes), *FCER1A* (myeloid dendritic cells).
+```{r, fig.height=5, fig.width=7.2, out.width = '100%'}
 GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),
                 dim.reduction.type = "umap",
                 point.size = 0.3)
@@ -163,7 +162,7 @@ GeneScatterPlot(sce,c("CD3D","CD79A","CST3","FCER1A"),
 
 ## Selecting a clustering of size $K$
 
-Manually select $K=40$ clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time this function is called.
+Manually select $K=40$ clusters from the dendrogram. This clustering is saved to *clustering.manual* slot and is overwritten every time the function is called.
 ```{r}
 sce <- SelectKClusters(sce,K=13)
 ```
@@ -190,7 +189,7 @@ plot_grid(ClusteringScatterPlot(sce,
 
 ## Identification of gene markers
 
-`ILoReg` provides functions for identifying gene markers for clusters. This is done by differential expression analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
+`ILoReg` provides functions for identifying gene markers for clusters. This is accomplished by DE analysis, where cells from each cluster are compared against the rest of the cells. The only statistical test supported at the moment is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The p-values are corrected for multiple comparisons using the Bonferroni method. 
 ```{r, eval = TRUE}
 
 gene_markers <- FindAllGeneMarkers(sce,
@@ -208,7 +207,7 @@ gene_markers <- FindAllGeneMarkers(sce,
 ```
 
 
-## Selecting top genes based on log2 fold-change
+## Selecting top gene markers
 
 Select top 10 and top 1 genes based on log2 fold-change and Bonferroni adjusted p-value.
 ```{r, eval = TRUE}
@@ -236,11 +235,11 @@ top1_adj.p.value <- SelectTopGenes(gene_markers,
 
 Visualize gene expression levels of cells over t-SNE or UMAP visualization.
 
-```{r FigTop1Scatter, echo=TRUE, fig.height=12, fig.width=16, out.width = '100%', eval = TRUE}
+```{r FigTop1Scatter, echo=TRUE, fig.height=21, fig.width=8, out.width = '100%', eval = TRUE}
 GeneScatterPlot(sce,
                 genes = unique(top1_log2FC$gene),
                 dim.reduction.type = "tsne",
-                point.size = 0.5)
+                point.size = 0.5,ncol=2)
 ```
 
 
@@ -332,11 +331,11 @@ umap_after <- ClusteringScatterPlot(sce,dim.reduction.type = "umap",title = "Aft
 
 ## Visualize with custom cluster labels
 
-```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center",eval = FALSE}
+```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center",eval = TRUE}
 # Select a clustering with K=20 clusters
-sce <- SelectKClusters(sce,K=20)
+sce <- SelectKClusters(sce,K=5)
 # Generate a random annotation, in which cell has 90% change of having the same cluster as in ILoReg's clustering
-custom_annotation <- unlist(lapply(1:ncol(sce@normalized.data),function(x) {prob <- rep(0.1/(sce@K.manual-1),sce@K.manual) ; prob[levels(sce@clustering.manual)==sce@clustering.manual[x]] <- 0.9 ; sample(levels(sce@clustering.manual),size = 1,prob = prob)}))
+custom_annotation <- plyr::mapvalues(metadata(sce)$iloreg$clustering.manual,c(1,2,3,4,5),LETTERS[1:5])
 # Visualize the annotation
 AnnotationScatterPlot(sce,annotation = custom_annotation,return.plot = F,dim.reduction.type = "tsne",show.legend=FALSE)
 ```

@@ -380,7 +380,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
   p2 <- ggplot(df2, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE,fill = "#F8766D") +
     theme_bw() +
-    ylab("Number of Epochs") +
+    ylab("Number of epochs") +
     xlab("") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
@@ -389,7 +389,7 @@ VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
   p3 <- ggplot(df3, aes_string(x = 'Measure',y = 'value'))+
     geom_violin(trim = TRUE, fill = "#F8766D") +
     theme_bw() +
-    ylab("Average pairwise ARI") +
+    ylab("Average ARI between ICP runs") +
     xlab("") +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
@@ -1068,6 +1068,8 @@ setMethod("RenameCluster", signature(object = "SingleCellExperiment"),
 #' @param point.size point size (default 0.7)
 #' @param title text to write above the plot
 #' @param plot.expressing.cells.last whether to plot the expressing genes last to make the points more visible
+#' @param nrow a positive integer that specifies the number of rows in the plot grid. Default is \code{NULL}.
+#' @param ncol a positive integer that specifies the number of columns in the plot grid. Default is \code{NULL}.
 #'
 #' @name GeneScatterPlot
 #'
@@ -1099,7 +1101,9 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
                                                  dim.reduction.type,
                                                  point.size,
                                                  title,
-                                                 plot.expressing.cells.last) {
+                                                 plot.expressing.cells.last,
+                                                 nrow,
+                                                 ncol) {
 
   if (dim.reduction.type=="umap")
   {
@@ -1212,7 +1216,7 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
 
     }
 
-    p <- plot_grid(plotlist = plot_list,align = "hv")
+    p <- plot_grid(plotlist = plot_list,align = "hv",nrow = nrow, ncol = ncol)
 
     if (return.plot) {
       return(p)

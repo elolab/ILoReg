@@ -4,15 +4,8 @@
 \alias{RunICP}
 \title{Iterative Clustering Projection (ICP) clustering}
 \usage{
-RunICP(
-  normalized.data = NULL,
-  k = 15,
-  d = 0.3,
-  r = 5,
-  C = 5,
-  reg.type = "L1",
-  max.iter = 200
-)
+RunICP(normalized.data = NULL, k = 15, d = 0.3, r = 5, C = 5,
+  reg.type = "L1", max.iter = 200)
 }
 \arguments{
 \item{normalized.data}{A sparse matrix (dgCMatrix) containing
