@@ -106,7 +106,7 @@ Next, we consider two quality control measures of ICP that can aid detecting iss
 
 The projection accuracy of ICP that denotes ARI between the clustering and its projection by logistic regression at the final epoch of ICP. A projection accuracy $1$ would mean the classifier was able to predict the cluster membership of all cells correctly. As a general guideline, the average projection accuracy should be above $0.5$. A higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$.
 
-The average similarity between different ICP runs, measured by ARI. Since the $L$ probability matrices are merged and transformed into a lower dimensionality by PCA, i.e. linearly transforming a set of correlated variables into a smaller set of uncorrelated variables, some level of correlation among the probabilities (i.e. similarity among the ICP runs) is required to identify cell populations. In general, a higher $d$ leads to a lower similarity and a smaller $k$ to a higher similarity.
+The average similarity between different ICP runs, measured by ARI. Since the $L$ probability matrices are merged and transformed into a lower dimensionality by PCA, i.e. linearly transforming a set of correlated variables into a smaller set of uncorrelated variables, some degree of correlation among the probabilities (i.e. similarity among the ICP runs) is required to identify cell populations. In general, a higher $d$ leads to a lower similarity and a smaller $k$ to a higher similarity.
 
 ```{r, fig.height=4, fig.width=9, out.width = '100%',fig.align = "center"}
 # Draw violin plots of the projection accuracy of ICP, the number of epochs and the average similarity between ICP runs.
