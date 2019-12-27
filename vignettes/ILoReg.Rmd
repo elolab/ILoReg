@@ -66,7 +66,7 @@ The only required input for `ILoReg` is a normalized gene expression matrix with
 suppressMessages(library(ILoReg))
 suppressMessages(library(SingleCellExperiment))
 suppressMessages(library(cowplot))
-# The dataset has been normalized using the LogNormalize method from the Seurat R package.
+# The dataset was normalized using the LogNormalize method from the Seurat R package.
 sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
 sce <- PrepareILoReg(sce)
 ```
@@ -104,9 +104,9 @@ saveRDS(sce,file = "~/pbmc3k_500_iloreg.rds")
 
 Next, we consider two quality control measures of ICP that can aid detecting issues with the `ILoReg` analysis.
 
-The projection accuracy of ICP that denotes the adjusted Rand index (ARI) between the clustering and its  projection by logistic regression at the final epoch of ICP. A projection accuracy $1$ would mean the classifier was able to predict the cluster membership of all cells correctly. As a general guideline, the average projection accuracy should be above $0.5$. A higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$.
+The projection accuracy of ICP that denotes ARI between the clustering and its projection by logistic regression at the final epoch of ICP. A projection accuracy $1$ would mean the classifier was able to predict the cluster membership of all cells correctly. As a general guideline, the average projection accuracy should be above $0.5$. A higher accuracy can be achieved using lower values of $k$, $C$ and higher values of $d$ and $r$.
 
-The average similarity between ICP runs, measured by ARI. Since the $L$ probability matrices are merged and transformed into a lower dimensionality by PCA, i.e. linearly transforming a set of correlated variables into a smaller set of uncorrelated variables, some level of correlation among the probabilities (i.e. similarity among the ICP runs) is required to identify cell populations. In general, a higher $d$ leads to a lower similarity and a smaller $k$ to a higher similarity.
+The average similarity between different ICP runs, measured by ARI. Since the $L$ probability matrices are merged and transformed into a lower dimensionality by PCA, i.e. linearly transforming a set of correlated variables into a smaller set of uncorrelated variables, some level of correlation among the probabilities (i.e. similarity among the ICP runs) is required to identify cell populations. In general, a higher $d$ leads to a lower similarity and a smaller $k$ to a higher similarity.
 
 ```{r, fig.height=4, fig.width=9, out.width = '100%',fig.align = "center"}
 # Draw violin plots of the projection accuracy of ICP, the number of epochs and the average similarity between ICP runs.
@@ -133,7 +133,7 @@ PCAElbowPlot(sce)
 
 ## Nonlinear dimensionality reduction
 
-To visualize the data in two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. The input data for this step is the $N \times p$ -dimensional consensus matrix.
+To visualize the data in a two-dimensional space, nonlinear dimensionality reduction is performed using either t-SNE or UMAP. The input data for this step is the $N \times p$ -dimensional consensus matrix.
 
 ```{r}
 sce <- RunUMAP(sce)
