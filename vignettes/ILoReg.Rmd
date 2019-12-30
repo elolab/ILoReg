@@ -79,7 +79,7 @@ Running ICP $L$ times in parallel is the most computationally demanding part of 
 In the following, we give a brief summary of the parameters.
 
 * $k$: The number of initial clusters in ICP. The default is $15$. Along with decreasing $d$, increasing $k$ provides the most straightforward way to increase the diversity of the outcome, i.e. more subpopulations with subtle differences are formed.
-* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data. ($d$ in $n= \lceil Nd/k \rceil$), where $N$ is the total number of cells. The default is $0.3$. Decreasing $d$ below $0.2$ is not recommended due to the increased risk of ICP becoming unstable ($k$ starts to decrease during the iteration). In contrast, increasing $d$ above 0.3 will generate more dissimilar ICP runs. This will in turn decrease the heterogeneity of the outcome due to the cluster probabilities that are used in PCA becoming less correlated.
+* $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data ($n= \lceil Nd/k \rceil$), where $N$ is the total number of cells. The default is $0.3$. Decreasing $d$ below $0.2$ is not recommended due to the increased risk of ICP becoming unstable ($k$ starts to decrease during the iteration). In contrast, increasing $d$ above 0.3 will generate more dissimilar ICP runs. This will in turn decrease the heterogeneity of the outcome due to the cluster probabilities that are used in PCA becoming less correlated.
 * $C$: A positive real number that rules the trade-off between correct classification and regularization: $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{n} \log (1+ e^{-y_i w^T w})$$ The default is $0.3$. Decreasing $C$ increases the stringency of the L1-regularized feature selection, i.e. less genes are selected into the logistic regression model. With a lower $C$ the outcome will be determined by fewer genes.
 * $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops. The default is $5$.
 * $L$: The number of ICP runs. The default is $200$. 
@@ -196,7 +196,7 @@ plot_grid(ClusteringScatterPlot(sce,
 
 ## Identification of gene markers
 
-The`ILoReg` R package provides functions for the identification of gene markers of clusters. This is accomplished by DE analysis, where gene expression levels of the cells from each cluster are compared against the rest of the cells. The only currently supported statistical test is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The *p*-values are corrected for multiple comparisons using the Bonferroni method. To accelerate the analysis, genes that are less likely to be DE can be filtered out prior to the statistical testing using multiple criteria.
+The`ILoReg` R package provides functions for the identification of gene markers of clusters. This is accomplished by DE analysis, where gene expression levels of the cells from each cluster are compared against the rest of the cells. Currently, the only supported statistical test is the the Wilcoxon rank-sum test (aka Mann-Whitney U test). The *p*-values are corrected for multiple comparisons using the Bonferroni method. To accelerate the analysis, genes that are less likely to be DE can be filtered out prior to the statistical testing using multiple criteria.
 ```{r, eval = TRUE}
 
 gene_markers <- FindAllGeneMarkers(sce,
