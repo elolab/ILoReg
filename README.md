@@ -4,27 +4,15 @@
 
 
 
-ILoReg (abbr. for **I**terative **Lo**gistic **Reg**ression) is an R package for high-precision cell type identification from single-cell RNA-seq (scRNA-seq) data. 
-High-precision refers to the ability of ILoReg to identify subpopulations with subtle transcriptomic differences. 
-In our study ([Smolander J. et al.](https://gitlab.utu.fi/pajosm/iloreg)) we demonstrated the ability of ILoReg to identify, by both unsupervised clustering and visually, 
-immune and pancreas cell types that other popular scRNA-seq data analysis pipelines were not able to find. 
-Moreover, ILoReg can identify subpopulations that are differentiable by only a single gene.
+`ILoReg` is a tool for high-resolution *de novo* cell population identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [1], we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines had difficulties to find.
 
-The figure below depicts workflows of ILoReg and a feature selection -based pipeline, which is commonly used by many cell type identification methods, e.g. Seurat.
+The figure below illustrates the workflows of `ILoReg` and a conventional pipeline that applies feature selection prior to dimensionality reduction by principal component analysis (PCA), e.g. Seurat.
 
 ![*Figure: Analysis workflows of ILoReg and a feature-selection based approach*](vignettes/figure.png)
 
 
-Unlike most scRNA-seq data analysis pipelines, ILoReg does not reduce the dimensionality of the gene expression matrix by feature selection. 
-Instead, it performs probabilistic feature extraction, in which the **Iterative Clustering Projection** (**ICP**) clustering algorithm is run *L* times, which yields 
-*L* *k*-dimensional probability matrices that contain the new features. ICP is a novel clustering algorithm that iteratively seeks a clustering of size *k* 
-that maximizes the adjusted Rand index (ARI) between the clustering and its projection by L1-regularized logistic regression. 
-The *L* probability matrices are then merged and transformed by the principal component analysis (PCA) into a lower dimension *p*. 
-The second and final clustering step is performed using hierarhical clustering using the Ward's method, from which the user can efficiently (~1 s with 3,000 cells) 
-select a clustering of size *K*. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: 
-*t*-Distributed Stochastic Neighbor Embedding (t-SNE) and Uniform Manifold Approximation and Projection (UMAP).
 
-Moreover, ILoReg provides functions for differential expression analysis and gene expression visualization.
+In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the **iterative clustering projection (ICP)** clustering algorithm is run $L$ times, yielding $L$ different $N \times k$ -dimensional probability matrices that contain probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a new clustering algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression. The $L$ probability matrices are then merged into a joint probability matrix and subsequently transformed by principal component analysis (PCA) into a lower dimensional ($N \times p$) matrix (consensus matrix). The final clustering step is performed using hierarhical clustering by the Ward's method, after which the user can efficiently (~1 s with 3,000 cells) extract a clustering with $K$ consensus clusters. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP). Additionally, ILoReg provides user-friendly functions that enable identification of differentially expressed (DE) genes and visualization of gene expression.
 
 ## Installation
 
@@ -42,9 +30,9 @@ devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
 
 ## Example
 
-Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, where a Peripheral Blood Mononuclear Cell (PBMC) dataset was analyzed using ILoReg.
+Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, where a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
 
 ## Contact information
 
-If you find bugs from ILoReg or have suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you find bugs from `ILoReg` or have questions or suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
 
