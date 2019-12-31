@@ -34,5 +34,5 @@ Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, wh
 
 ## Contact information
 
-If you find bugs from `ILoReg` or have questions or suggestions on how to improve our pipeline, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you have questions related to `ILoReg`, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
 
