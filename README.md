@@ -36,3 +36,6 @@ Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, wh
 
 If you have questions related to `ILoReg`, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
 
+## References
+
+1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". BioRxiv (2020).
