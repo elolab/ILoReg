@@ -20,7 +20,7 @@ The latest version of `ILoReg` can be downloaded from GitHub using the devtools 
 
 ```R
 
-devtools::install_github("elolab/ILoReg")
+devtools::install_github("elolab/iloreg")
 
 ```
 
