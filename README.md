@@ -4,7 +4,7 @@
 
 
 
-`ILoReg` is a tool for high-resolution *de novo* cell population identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [[1]](https://www.biorxiv.org/), we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines had difficulties to find.
+`ILoReg` is a tool for high-resolution *de novo* cell population identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [[1]](https://www.biorxiv.org/), we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines struggled to find.
 
 The figure below illustrates the workflows of `ILoReg` and a conventional pipeline that applies feature selection prior to dimensionality reduction by principal component analysis (PCA), e.g. Seurat.
 
@@ -26,7 +26,7 @@ devtools::install_github("elolab/ILoReg")
 
 ## Example
 
-Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
+Please follow this [link](https://github.com/elolab/iloreg/examples/pbmc3k_500.html) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
 
 ## Contact information
 
@@ -34,4 +34,4 @@ If you have questions related to `ILoReg`, please contact us in [https://github.
 
 ## References
 
-1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". BioRxiv (2020).
+1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". bioRxiv (2020).

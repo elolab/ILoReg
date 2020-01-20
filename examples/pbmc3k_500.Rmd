@@ -1,12 +1,12 @@
 ---
-title: "ILoReg package manual"
+title: "ILoReg example: peripheral blood mononuclear cells"
 author: "Johannes Smolander"
 date: "`r Sys.Date()`"
 output: 
   BiocStyle::html_document:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{ILoReg package manual}
+  %\VignetteIndexEntry{ILoReg example: peripheral blood mononuclear cells}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding[utf8]{inputenc}
 ---
@@ -28,7 +28,7 @@ opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
 
 The figure below illustrates the workflows of `ILoReg` and a conventional pipeline that applies feature selection prior to dimensionality reduction by principal component analysis (PCA), e.g. Seurat.
 
-![*Figure: Analysis workflows of `ILoReg` and a feature-selection based approach.*](figure.png){width=100%}
+![*Figure: Analysis workflows of `ILoReg` and a feature-selection based approach.*](../vignettes/figure.png){width=100%}
 
 In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction, in which the **iterative clustering projection (ICP)** clustering algorithm is run $L$ times, yielding $L$ different $N \times k$ -dimensional probability matrices that contain probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a new clustering algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression: 
 $$\displaystyle \arg \max_C ARI(C,C')$$ 
@@ -47,7 +47,7 @@ devtools::install_github("elolab/ILoReg")
 
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3].
+In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3], because this enabled the identification of B cells with lambda and kappa chains; the original expression matrix did not include *IGLC2*, *IGLC3* and *IGKC* genes. 
 
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
@@ -400,5 +400,5 @@ GM_dendritic <- FindGeneMarkers(sce,
 
 # Contact information
 
-If you have questions related to `ILoReg`, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you have questions related to `ILoReg`, please contact us in [GitHub](https://github.com/elolab/ILoReg/issues). 
 
