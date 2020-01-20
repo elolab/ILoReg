@@ -400,5 +400,5 @@ GM_dendritic <- FindGeneMarkers(sce,
 
 # Contact information
 
-If you have questions related to `ILoReg`, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you have questions related to `ILoReg`, please contact us [here](https://gitlab.utu.fi/pajosm/iloreg). 
 

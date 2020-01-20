@@ -30,7 +30,7 @@ Please follow this [link](https://github.com/elolab/ILoReg/tree/master/examples)
 
 ## Contact information
 
-If you have questions related to `ILoReg`, please contact us in [https://github.com/elolab/iloreg/issues](https://github.com/elolab/iloreg/issues). 
+If you have questions related to `ILoReg`, please contact us [here](https://github.com/elolab/iloreg/issues). 
 
 ## References
 
