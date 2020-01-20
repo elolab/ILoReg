@@ -26,7 +26,7 @@ devtools::install_github("elolab/ILoReg")
 
 ## Example
 
-Please follow this [link](https://github.com/elolab/ILoReg/tree/master/examples) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
+Please follow this [link](https://github.com/elolab/iloreg/tree/master/examples) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
 
 ## Contact information
 
