@@ -41,19 +41,13 @@ The latest version of `ILoReg` can be downloaded from GitHub and installed by ex
 
 
 ```{r eval = FALSE}
-library(devtools)
-
-creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
-                            "~/../.ssh/id_rsa")
-devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
-                      credentials = creds,ref = "eaf17d82")
+devtools::install_github("elolab/ILoReg")
 ```
 
 
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3].
-
+In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2].
 
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis

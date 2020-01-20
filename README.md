@@ -16,25 +16,21 @@ In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce 
 
 ## Installation
 
-The latest version of `ILoReg` can be downloaded from GitHub using devtools R package.
+The latest version of `ILoReg` can be downloaded from GitHub using the devtools R package.
 
 ```R
-library(devtools)
 
-creds = git2r::cred_ssh_key("~/../.ssh/id_rsa.pub",
-                            "~/../.ssh/id_rsa")
-devtools::install_git("gitlab@gitlab.utu.fi:pajosm/iloreg.git",
-                      credentials = creds)
+devtools::install_github("elolab/ILoReg")
 
 ```
 
 ## Example
 
-Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, where a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
+Please follow this [link](https://gitlab.utu.fi/pajosm/iloreg) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset was analyzed using `ILoReg`.
 
 ## Contact information
 
-If you have questions related to `ILoReg`, please contact us in [GitHub](https://gitlab.utu.fi/pajosm/iloreg). 
+If you have questions related to `ILoReg`, please contact us in [https://github.com/elolab/iloreg/issues](https://github.com/elolab/iloreg/issues). 
 
 ## References
 
