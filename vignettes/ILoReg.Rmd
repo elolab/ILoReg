@@ -37,7 +37,7 @@ The $L$ probability matrices are then merged into a joint probability matrix and
 
 # Installation
 
-The latest version of `ILoReg` can be downloaded from GitHub and installed by executing the following commands in the R console.
+The latest version of `ILoReg` can be downloaded from GitHub and installed by executing the following command in the R console.
 
 
 ```{r eval = FALSE}
@@ -47,7 +47,7 @@ devtools::install_github("elolab/ILoReg")
 
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2].
+In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3].
 
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
