@@ -4,7 +4,7 @@
 
 
 
-`ILoReg` is a tool for high-resolution cell population identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [[1]](https://www.biorxiv.org/), we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines struggled to find.
+`ILoReg` is a tool for high-resolution cell population identification from single-cell RNA-seq (scRNA-seq) data. High-resolution refers to the ability of `ILoReg` to identify subpopulations with subtle transcriptomic differences. In our study [[1]](https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1), we showed that `ILoReg` identitied, by both unsupervised clustering and visually, immune cell populations that other scRNA-seq data analysis pipelines struggled to find.
 
 The figure below illustrates the workflows of `ILoReg` and a conventional pipeline that applies feature selection prior to dimensionality reduction by principal component analysis (PCA), e.g. Seurat.
 
@@ -34,4 +34,4 @@ If you have questions related to `ILoReg`, please contact us [here](https://gith
 
 ## References
 
-1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". bioRxiv (2020).
+1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". Preprint at [https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1](https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1) (2020).
