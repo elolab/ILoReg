@@ -391,5 +391,5 @@ sessionInfo()
 
 # Contact information
 
-If you have questions related to `ILoReg`, please contact us [here](https://github.com/elolab/iloreg).
+If you have questions related to `ILoReg`, please contact us [here](https://github.com/elolab/ILoReg).
 

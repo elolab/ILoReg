@@ -18,13 +18,13 @@ The latest version of `ILoReg` can be downloaded from GitHub using the devtools 
 
 ```R
 
-devtools::install_github("elolab/iloreg")
+devtools::install_github("elolab/ILoReg")
 
 ```
 
 ## Example
 
-Please follow this [link](https://github.com/elolab/iloreg/blob/master/vignettes/ILoReg.Rmd) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset is analyzed using `ILoReg`.
+Please follow this [link](https://github.com/elolab/ILoReg/blob/master/vignettes/ILoReg.Rmd) to an example, in which a peripheral blood mononuclear cell (PBMC) dataset is analyzed using `ILoReg`.
 
 ## Contact information
 
