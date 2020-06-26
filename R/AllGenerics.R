@@ -7,15 +7,8 @@ setGeneric("PrepareILoReg",signature = "object",
 #' @export
 setGeneric("RunParallelICP",signature = "object",
            function(object, k = 15, d = 0.3, L = 200, r = 5, C = 0.3, reg.type = "L1", max.iter = 200, threads = 0) {
-  standardGeneric("RunParallelICP")
-})
-
-#' @export
-setGeneric("VisualizeQC",signature = "object",
-           function(object,
-                    return.plot = FALSE) {
-  standardGeneric("VisualizeQC")
-})
+             standardGeneric("RunParallelICP")
+           })
 
 #' @export
 setGeneric("RunPCA", signature = "object",
@@ -23,78 +16,78 @@ setGeneric("RunPCA", signature = "object",
                     p = 50,
                     scale = FALSE,
                     threshold = 0) {
-  standardGeneric("RunPCA")
-})
+             standardGeneric("RunPCA")
+           })
 
 #' @export
 setGeneric("PCAElbowPlot", signature = "object",
            function(object,
                     return.plot=FALSE) {
-  standardGeneric("PCAElbowPlot")
-})
+             standardGeneric("PCAElbowPlot")
+           })
 
 #' @export
 setGeneric("RunUMAP", signature = "object",
            function(object) {
-  standardGeneric("RunUMAP")
-})
+             standardGeneric("RunUMAP")
+           })
 
 #' @export
 setGeneric("RunTSNE", signature = "object",
            function(object,
                     perplexity = 30) {
-  standardGeneric("RunTSNE")
-})
+             standardGeneric("RunTSNE")
+           })
 
 #' @export
 setGeneric("HierarchicalClustering", signature = "object",
            function(object) {
-  standardGeneric("HierarchicalClustering")
-})
+             standardGeneric("HierarchicalClustering")
+           })
 
 #' @export
-setGeneric("CalculateSilhouetteInformation", signature = "object",
+setGeneric("CalcSilhInfo", signature = "object",
            function(object,
                     K.start = 2, K.end = 50) {
-  standardGeneric("CalculateSilhouetteInformation")
-})
+             standardGeneric("CalcSilhInfo")
+           })
 
 #' @export
 setGeneric("SilhouetteCurve", signature = "object",
            function(object,
                     return.plot = FALSE) {
-  standardGeneric("SilhouetteCurve")
-})
+             standardGeneric("SilhouetteCurve")
+           })
 
 #' @export
 setGeneric("SelectKClusters", signature = "object",
            function(object,
                     K = NULL) {
-  standardGeneric("SelectKClusters")
-})
+             standardGeneric("SelectKClusters")
+           })
 
 #' @export
 setGeneric("MergeClusters", signature = "object",
            function(object,
                     clusters.to.merge = "",
                     new.name = "") {
-  standardGeneric("MergeClusters")
-})
+             standardGeneric("MergeClusters")
+           })
 
 #' @export
 setGeneric("RenameAllClusters", signature = "object",
            function(object,
                     new.cluster.names = "") {
-  standardGeneric("RenameAllClusters")
-})
+             standardGeneric("RenameAllClusters")
+           })
 
 #' @export
 setGeneric("RenameCluster", signature = "object",
            function(object,
                     old.cluster.name = "",
                     new.cluster.name = "") {
-  standardGeneric("RenameCluster")
-})
+             standardGeneric("RenameCluster")
+           })
 
 #' @export
 setGeneric("GeneScatterPlot", signature = "object",
@@ -107,8 +100,8 @@ setGeneric("GeneScatterPlot", signature = "object",
                     plot.expressing.cells.last = FALSE,
                     nrow = NULL,
                     ncol = NULL) {
-  standardGeneric("GeneScatterPlot")
-})
+             standardGeneric("GeneScatterPlot")
+           })
 
 #' @export
 setGeneric("ClusteringScatterPlot",signature = "object",
@@ -119,8 +112,8 @@ setGeneric("ClusteringScatterPlot",signature = "object",
                     point.size = 0.7,
                     title = "",
                     show.legend = TRUE) {
-  standardGeneric("ClusteringScatterPlot")
-})
+             standardGeneric("ClusteringScatterPlot")
+           })
 
 #' @export
 setGeneric("FindAllGeneMarkers", signature = "object",
@@ -135,8 +128,8 @@ setGeneric("FindAllGeneMarkers", signature = "object",
                     pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
-  standardGeneric("FindAllGeneMarkers")
-})
+             standardGeneric("FindAllGeneMarkers")
+           })
 
 #' @export
 setGeneric("FindGeneMarkers", signature = "object",
@@ -153,8 +146,8 @@ setGeneric("FindGeneMarkers", signature = "object",
                     pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
-  standardGeneric("FindGeneMarkers")
-})
+             standardGeneric("FindGeneMarkers")
+           })
 
 #' @export
 setGeneric("VlnPlot", signature = "object",
@@ -163,16 +156,16 @@ setGeneric("VlnPlot", signature = "object",
                     genes = NULL,
                     return.plot = FALSE,
                     rotate.x.axis.labels=FALSE) {
-  standardGeneric("VlnPlot")
-})
+             standardGeneric("VlnPlot")
+           })
 
 #' @export
 setGeneric("GeneHeatmap", signature = "object",
            function(object,
                     clustering.type = "manual",
                     gene.markers = NULL) {
-  standardGeneric("GeneHeatmap")
-})
+             standardGeneric("GeneHeatmap")
+           })
 
 #' @export
 setGeneric("AnnotationScatterPlot", signature = "object",
@@ -182,6 +175,6 @@ setGeneric("AnnotationScatterPlot", signature = "object",
                     dim.reduction.type = "",
                     point.size = 0.7,
                     show.legend = FALSE) {
-  standardGeneric("AnnotationScatterPlot")
-})
+             standardGeneric("AnnotationScatterPlot")
+           })
 

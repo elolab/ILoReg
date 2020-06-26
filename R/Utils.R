@@ -1,13 +1,15 @@
-#' 500 cells downsampled from the pbmc3k dataset.
+#' A toy dataset with 500 cells downsampled from the pbmc3k dataset.
 #'
 #' The preprocessing was done using Cell Ranger v2.2.0 and
-#' the GRCh37.p13 human reference genome.
-#'
+#' the GRCh38.p12 human reference genome.
+#' The Normalization was done using the LogNormalize method of Seurat v3 R package.
+#' The sampling was done using the sample() function without replacement
+#' and set.seed(1) as initialization.
 #' @docType data
 #'
 #' @usage data(pbmc3k_500)
 #'
-#' @format raw_data and data, both dgCMatrix objects
+#' @format pbmc3k_500, dgCMatrix object
 #'
 #' @keywords datasets
 #'
@@ -32,7 +34,7 @@
 #' @param k A positive integer greater or equal to 2, denoting the number of
 #' clusters in ICP. Default is \code{15}.
 #' @param d A numeric that defines how many cells per cluster should be
-#' down- and oversampled (d in N/k*d), when stratified.downsampling=FALSE,
+#' down- and oversampled (d in ceiling(N/k*d)), when stratified.downsampling=FALSE,
 #' or what fraction should be downsampled in the stratified approach
 #' ,stratified.downsampling=TRUE. Default is \code{0.3}.
 #' @param r A positive integer that denotes the number of reiterations
@@ -43,7 +45,7 @@
 #' @param max.iter A positive integer that denotes the maximum number of
 #' iterations performed until the algorithm ends. Default is \code{200}.
 #'
-#' @return A list comprising the probability matrix and the clustering
+#' @return A list that includes the probability matrix and the clustering
 #' similarity measures: ARI, NMI, etc.
 #'
 #' @keywords iterative clustering projection ICP clustering
@@ -53,7 +55,6 @@
 #' @import LiblineaR
 #' @import SparseM
 #'
-#' @export
 #'
 RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
                    reg.type = "L1", max.iter = 200) {
@@ -91,8 +92,8 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     ident_2 <- res$predictions
 
     # Safety procedure: If k drops to 1, start from the beginning.
-    # k should NOT decrease during the iteration when
-    # the down- and oversampling approach is used for balancing training data.
+    # However, k should NOT decrease during the iteration when
+    # the down- and oversampling approach is used for the balancing training data.
     if (length(levels(factor(as.character(ident_2)))) < 2)
     {
       first_round <- TRUE
@@ -151,7 +152,6 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
 #'
 #' @keywords downsampling oversampling
 #'
-#' @export
 #'
 DownOverSampling <- function(x, n = 50) {
   if (length(x) < n) {
@@ -198,7 +198,6 @@ DownOverSampling <- function(x, n = 50) {
 #' @importFrom LiblineaR LiblineaR
 #' @importFrom stats predict
 #'
-#' @export
 #'
 LogisticRegression <- function(training.sparse.matrix = NULL,
                                training.ident = NULL,
@@ -250,7 +249,7 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
 #' @param top.N How many top or bottom genes to select. Default is \code{10}.
 #' @param criterion.type Which criterion to use for selecting the genes.
 #' Default is "log2FC".
-#' @param reverse Whether to select bottom instead of top N genes.
+#' @param inverse Whether to select bottom instead of top N genes.
 #' Default is \code{FALSE}.
 #'
 #' @return an object of `data.frame` class
@@ -259,13 +258,30 @@ LogisticRegression <- function(training.sparse.matrix = NULL,
 #'
 #' @importFrom dplyr group_by %>% top_n
 #'
+#'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' gene_markers <- FindAllGeneMarkers(sce)
+#' ## Select top 10 markers based on log2 fold-change
+#' top10_log2FC <- SelectTopGenes(gene_markers,
+#'                                top.N = 10,
+#'                                criterion.type = "log2FC",
+#'                                inverse = FALSE)
+#'
 #' @export
 #'
 SelectTopGenes <- function(gene.markers = NULL, top.N = 10,
-                           criterion.type = "log2FC", reverse=FALSE)
+                           criterion.type = "log2FC", inverse=FALSE)
 {
 
-  if (reverse)
+  if (inverse)
   {
     top.N <- -top.N
   }

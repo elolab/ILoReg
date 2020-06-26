@@ -3,8 +3,10 @@
 \docType{data}
 \name{pbmc3k_500}
 \alias{pbmc3k_500}
-\title{500 cells downsampled from the pbmc3k dataset.}
-\format{raw_data and data, both dgCMatrix objects}
+\title{A toy dataset with 500 cells downsampled from the pbmc3k dataset.}
+\format{
+pbmc3k_500, dgCMatrix object
+}
 \source{
 \url{https://support.10xgenomics.com/single-cell-gene-expression}
 }
@@ -13,7 +15,10 @@ data(pbmc3k_500)
 }
 \description{
 The preprocessing was done using Cell Ranger v2.2.0 and
-the GRCh37.p13 human reference genome.
+the GRCh38.p12 human reference genome.
+The Normalization was done using the LogNormalize method of Seurat v3 R package.
+The sampling was done using the sample() function without replacement
+and set.seed(1) as initialization.
 }
 \examples{
 data(pbmc3k_500)

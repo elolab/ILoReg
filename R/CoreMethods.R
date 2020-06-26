@@ -287,130 +287,6 @@ setMethod("RunParallelICP", signature(object = "SingleCellExperiment"),
           RunParallelICP.SingleCellExperiment)
 
 
-#' @title Visualize the terminal projection accuracy, number of
-#' epochs/iterations and the average pairwise ARI values.
-#'
-#' @description
-#' Draw violin plots of the terminal projection accuracy,
-#' the number of epochs/iterations and the average pairwise ARI values.
-#'
-#' @param object an object of \code{SingleCellExperiment} class
-#' @param return.plot logical indicating if the ggplot2 object
-#' should be returned. Default is \code{FALSE}.
-#'
-#' @name VisualizeQC
-#'
-#' @return ggplot2 object if \code{return.plot=TRUE}
-#'
-#' @keywords terminal projection accuracy average pairwise
-#' ARI quality control QC
-#'
-#' @import ggplot2
-#' @importFrom cowplot plot_grid
-#' @importFrom aricode ARI
-#' @importFrom S4Vectors metadata metadata<-
-#'
-#' @examples
-#' library(SingleCellExperiment)
-#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
-#' sce <- PrepareILoReg(sce)
-#' ## These settings are just to accelerate the example, use the defaults.
-#' sce <- RunParallelICP(sce,L=2,threads=1,k=5,C=0.1,r=1) # Use L=200
-#' VisualizeQC(sce)
-#'
-VisualizeQC.SingleCellExperiment <- function(object, return.plot) {
-
-  final_aris <- unlist(lapply(metadata(object)$iloreg$metrics,
-                              function(x) x["ARI",ncol(x)]))
-
-  df <- data.frame(matrix(final_aris, ncol = 1,
-                          dimnames =
-                            list(seq_len(length(final_aris)),c("value"))))
-  df$Measure <- "CPA"
-  df1 <- df
-
-  number_of_runs <- unlist(lapply(metadata(object)$iloreg$metrics,
-                                  function(x) ncol(x)))
-
-  df <- data.frame(matrix(number_of_runs,ncol = 1,
-                          dimnames =
-                            list(seq_len(length(number_of_runs)),c("value"))))
-  df$Measure <- "Epochs"
-  df2 <- df
-
-  # Calculate ARI matrix
-  cluster_list <- lapply(metadata(object)$iloreg$joint.probability,
-                         function(x) apply(x,1,which.max))
-  ARI_matrix <- matrix(NA,nrow = metadata(object)$iloreg$L,
-                       ncol = metadata(object)$iloreg$L)
-  for (i in seq_len(metadata(object)$iloreg$L))
-  {
-    for (j in seq_len(metadata(object)$iloreg$L))
-    {
-      if (i < j)
-      {
-        next
-      }
-      ari <- ARI(cluster_list[[i]],cluster_list[[j]])
-      ARI_matrix[i,j] <- ari
-      ARI_matrix[j,i] <- ari
-
-    }
-  }
-
-  pairwise_aris <- apply(ARI_matrix, 1, mean)
-  df <- data.frame(matrix(pairwise_aris, ncol = 1,
-                          dimnames =
-                            list(seq_len(length(pairwise_aris)), c("value"))))
-  df$Measure <- "Average Pairwise ARI"
-  df3 <- df
-
-  # df <- rbind(df1,df2,df3)
-
-  p1 <- ggplot(df1, aes_string(x = 'Measure',y = 'value'))+
-    geom_violin(trim = TRUE,fill = "#F8766D") +
-    theme_bw() +
-    ylab("Projection accuracy of ICP") +
-    xlab("") +
-    theme(axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ylim(0,1)
-
-  p2 <- ggplot(df2, aes_string(x = 'Measure',y = 'value'))+
-    geom_violin(trim = TRUE,fill = "#F8766D") +
-    theme_bw() +
-    ylab("Number of epochs") +
-    xlab("") +
-    theme(axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
-
-  p3 <- ggplot(df3, aes_string(x = 'Measure',y = 'value'))+
-    geom_violin(trim = TRUE, fill = "#F8766D") +
-    theme_bw() +
-    ylab("Average ARI between ICP runs") +
-    xlab("") +
-    theme(axis.title.x = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    ylim(0,1)
-
-  p <- plot_grid(p1, p2, p3,nrow = 1)
-
-  if (return.plot) {
-    return(p)
-  } else {
-    print(p)
-  }
-}
-
-#' @rdname VisualizeQC
-#' @aliases VisualizeQC
-setMethod("VisualizeQC", signature(object = "SingleCellExperiment"),
-          VisualizeQC.SingleCellExperiment)
-
-
 #' @title PCA transformation of the joint probability matrix
 #'
 #' @description
@@ -689,7 +565,7 @@ setMethod("HierarchicalClustering", signature(object = "SingleCellExperiment"),
 #' @param K.end a numeric for the largest
 #' K value to be tested. Default is \code{50}.
 #'
-#' @name CalculateSilhouetteInformation
+#' @name CalcSilhInfo
 #'
 #' @return object of \code{SingleCellExperiment} class
 #'
@@ -709,9 +585,9 @@ setMethod("HierarchicalClustering", signature(object = "SingleCellExperiment"),
 #' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
 #' sce <- RunPCA(sce,p=5)
 #' sce <- HierarchicalClustering(sce)
-#' sce <- CalculateSilhouetteInformation(sce)
+#' sce <- CalcSilhInfo(sce)
 #'
-CalculateSilhouetteInformation.SingleCellExperiment <-
+CalcSilhInfo.SingleCellExperiment <-
   function(object, K.start, K.end) {
 
     distance_matrix <- parDist(reducedDim(object,"PCA"),
@@ -747,10 +623,10 @@ CalculateSilhouetteInformation.SingleCellExperiment <-
     return(object)
   }
 
-#' @rdname CalculateSilhouetteInformation
-#' @aliases CalculateSilhouetteInformation
-setMethod("CalculateSilhouetteInformation", signature(object = "SingleCellExperiment"),
-          CalculateSilhouetteInformation.SingleCellExperiment)
+#' @rdname CalcSilhInfo
+#' @aliases CalcSilhInfo
+setMethod("CalcSilhInfo", signature(object = "SingleCellExperiment"),
+          CalcSilhInfo.SingleCellExperiment)
 
 #' @title Silhouette curve
 #'
@@ -780,7 +656,7 @@ setMethod("CalculateSilhouetteInformation", signature(object = "SingleCellExperi
 #' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
 #' sce <- RunPCA(sce,p=5)
 #' sce <- HierarchicalClustering(sce)
-#' sce <- CalculateSilhouetteInformation(sce)
+#' sce <- CalcSilhInfo(sce)
 #' SilhouetteCurve(sce)
 #'
 SilhouetteCurve.SingleCellExperiment <- function(object, return.plot) {
@@ -1063,13 +939,17 @@ setMethod("RenameCluster", signature(object = "SingleCellExperiment"),
 #'
 #' @param object of \code{SingleCellExperiment} class
 #' @param genes a character vector of the genes to be visualized
-#' @param return.plot whether to return the ggplot2 object or just draw it (default \code{FALSE})
+#' @param return.plot whether to return the ggplot2 object or just
+#' draw it (default \code{FALSE})
 #' @param dim.reduction.type "tsne" or "umap" (default "tsne")
 #' @param point.size point size (default 0.7)
 #' @param title text to write above the plot
-#' @param plot.expressing.cells.last whether to plot the expressing genes last to make the points more visible
-#' @param nrow a positive integer that specifies the number of rows in the plot grid. Default is \code{NULL}.
-#' @param ncol a positive integer that specifies the number of columns in the plot grid. Default is \code{NULL}.
+#' @param plot.expressing.cells.last whether to plot the expressing genes
+#' last to make the points more visible
+#' @param nrow a positive integer that specifies the number of rows in
+#' the plot grid. Default is \code{NULL}.
+#' @param ncol a positive integer that specifies the number of columns
+#' in the plot grid. Default is \code{NULL}.
 #'
 #' @name GeneScatterPlot
 #'
@@ -1145,8 +1025,10 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
                                high = "blue",name = genes) +
         xlab(xlab) +
         ylab(ylab) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black"))
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              axis.line = element_line(colour = "black"))
 
 
     } else {
@@ -1156,8 +1038,10 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
                                high = "blue",name = genes) +
         xlab(xlab) +
         ylab(ylab) +
-        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-              panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              axis.line = element_line(colour = "black")) +
         ggtitle(title) +
         theme(plot.title = element_text(hjust = 0.5))
 
@@ -1196,8 +1080,10 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
                                  high = "blue",name = gene) +
           xlab(xlab) +
           ylab(ylab) +
-          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                panel.background = element_blank(), axis.line = element_line(colour = "black"))
+          theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(colour = "black"))
       } else {
         p<-ggplot(df, aes_string(x='dim1', y='dim2')) +
           geom_point(size=point.size,aes_string(color='group')) +
@@ -1205,8 +1091,10 @@ GeneScatterPlot.SingleCellExperiment <- function(object,
                                  high = "blue",name = gene) +
           xlab(xlab) +
           ylab(ylab) +
-          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+          theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(colour = "black")) +
           ggtitle(title) +
           theme(plot.title = element_text(hjust = 0.5))
 
@@ -1241,7 +1129,7 @@ setMethod("GeneScatterPlot", signature(object = "SingleCellExperiment"),
 #' @param object of \code{SingleCellExperiment} class
 #' @param clustering.type "manual" or "optimal". "manual" refers to the
 #' clustering formed using the "SelectKClusters" function and "optimal" to
-#' the clustering formed using the "CalculateSilhouetteInformation" function.
+#' the clustering formed using the "CalcSilhInfo" function.
 #' Default is "manual".
 #' @param return.plot a logical denoting whether to return the ggplot2 object.
 #' Default is \code{FALSE}.
@@ -1372,7 +1260,7 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' @param object of \code{SingleCellExperiment} class
 #' @param clustering.type "manual" or "optimal". "manual" refers to the
 #' clustering formed using the "SelectKClusters" function and "optimal"
-#' to the clustering formed using the "CalculateSilhouetteInformation" function.
+#' to the clustering formed using the "CalcSilhInfo" function.
 #' Default is "manual".
 #' @param test Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 #' AKA Mann-Whitney U test) is supported at the moment.
@@ -1422,7 +1310,7 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' sce <- RunPCA(sce,p=5)
 #' sce <- HierarchicalClustering(sce)
 #' sce <- SelectKClusters(sce,K=5)
-#' gene_markes <- FindAllGeneMarkers(sce)
+#' gene_markers <- FindAllGeneMarkers(sce)
 #'
 FindAllGeneMarkers.SingleCellExperiment <- function(object,
                                                     clustering.type,
@@ -1462,8 +1350,11 @@ FindAllGeneMarkers.SingleCellExperiment <- function(object,
       cells_in_cluster <- table(clustering)[cluster]
       if (max.cells.per.cluster < cells_in_cluster)
       {
-        inds <- sample(seq_len(cells_in_cluster),size = max.cells.per.cluster,replace = FALSE)
-        cells_downsampled <- c(cells_downsampled,names(clustering[clustering==cluster])[inds])
+        inds <- sample(seq_len(cells_in_cluster),
+                       size = max.cells.per.cluster,
+                       replace = FALSE)
+        names_cluster <- names(clustering[clustering==cluster])
+        cells_downsampled <- c(cells_downsampled,names_cluster[inds])
       }
     }
     data <- data[,cells_downsampled]
@@ -1482,7 +1373,8 @@ FindAllGeneMarkers.SingleCellExperiment <- function(object,
     data_cluster <- data[,clustering==cluster]
     data_other <- data[,clustering!=cluster]
 
-    # Skip if the number of cells in the test or the reference set is lower than min.cells.group
+    # Skip if the number of cells in the test
+    # or the reference set is lower than min.cells.group
     if (ncol(data_cluster) < min.cells.group | ncol(data_other) < min.cells.group)
     {
       cat("-----------------------------------\n")
@@ -1601,7 +1493,7 @@ setMethod("FindAllGeneMarkers", signature(object = "SingleCellExperiment"),
 #' to use in the second group (named group.2 in the results)
 #' @param clustering.type "manual" or "optimal". "manual" refers to the
 #' clustering formed using the "SelectKClusters" function and "optimal" to
-#' the clustering formed using the "CalculateSilhouetteInformation" function.
+#' the clustering formed using the "CalcSilhInfo" function.
 #' Default is "manual".
 #' @param test Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 #' AKA Mann-Whitney U test) is supported at the moment.
@@ -1858,7 +1750,7 @@ setMethod("FindGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @param clustering.type "manual" or "optimal". "manual"
 #' refers to the clustering formed using the "SelectKClusters" function
 #' and "optimal" to the clustering formed using the
-#' "CalculateSilhouetteInformation" function. Default is "manual".
+#' "CalcSilhInfo" function. Default is "manual".
 #' @param genes a character vector denoting the gene names that are visualized
 #' @param return.plot return.plot whether to return the ggplot2 object
 #' @param rotate.x.axis.labels a logical denoting whether the x-axis
@@ -1950,7 +1842,7 @@ setMethod("VlnPlot", signature(object = "SingleCellExperiment"),
 #' @param object of \code{SingleCellExperiment} class
 #' @param clustering.type "manual" or "optimal". "manual" refers to the
 #' clustering formed using the "SelectKClusters" function and "optimal"
-#' to the clustering using the "CalculateSilhouetteInformation" function.
+#' to the clustering using the "CalcSilhInfo" function.
 #' Default is "manual".
 #' @param gene.markers a data frame of the gene markers generated
 #' by FindAllGeneMarkers function. To accelerate the drawing, filtering
@@ -1976,7 +1868,7 @@ setMethod("VlnPlot", signature(object = "SingleCellExperiment"),
 #' sce <- SelectKClusters(sce,K=5)
 #' gene_markers <- FindAllGeneMarkers(sce,log2fc.threshold = 0.5,min.pct = 0.5)
 #' top10_log2FC <- SelectTopGenes(gene_markers,top.N=10,
-#' criterion.type="log2FC",reverse=FALSE)
+#' criterion.type="log2FC",inverse=FALSE)
 #' GeneHeatmap(sce,clustering.type = "manual",
 #'  gene.markers = top10_log2FC)
 #'
@@ -2047,6 +1939,27 @@ setMethod("GeneHeatmap", signature(object = "SingleCellExperiment"),
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom stats median
 #'
+#' @examples
+#' library(SingleCellExperiment)
+#' sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+#' sce <- PrepareILoReg(sce)
+#' ## These settings are just to accelerate the example, use the defaults.
+#' sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+#' sce <- RunPCA(sce,p=5)
+#' sce <- RunTSNE(sce)
+#' sce <- HierarchicalClustering(sce)
+#' sce <- SelectKClusters(sce,K=5)
+#' ## Change the names to the first five alphabets and Visualize the annotation.
+#' custom_annotation <- plyr::mapvalues(metadata(sce)$iloreg$clustering.manual,
+#'                                      c(1,2,3,4,5),
+#'                                      LETTERS[1:5])
+#' AnnotationScatterPlot(sce,
+#'                       annotation = custom_annotation,
+#'                       return.plot = FALSE,
+#'                       dim.reduction.type = "tsne",
+#'                       show.legend = FALSE)
+#'
+#'
 AnnotationScatterPlot.SingleCellExperiment <- function(object,
                                                        annotation,
                                                        return.plot,
@@ -2086,7 +1999,10 @@ AnnotationScatterPlot.SingleCellExperiment <- function(object,
     xlab(xlab) +
     ylab(ylab) +
     theme_classic() +
-    annotate("text", x = cluster_centers[,1], y = cluster_centers[,2], label = levels(annotation)) +
+    annotate("text",
+             x = cluster_centers[,1],
+             y = cluster_centers[,2],
+             label = levels(annotation)) +
     guides(colour = guide_legend(override.aes = list(size=2)))
 
 

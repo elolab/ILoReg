@@ -4,8 +4,15 @@
 \alias{RunICP}
 \title{Iterative Clustering Projection (ICP) clustering}
 \usage{
-RunICP(normalized.data = NULL, k = 15, d = 0.3, r = 5, C = 5,
-  reg.type = "L1", max.iter = 200)
+RunICP(
+  normalized.data = NULL,
+  k = 15,
+  d = 0.3,
+  r = 5,
+  C = 5,
+  reg.type = "L1",
+  max.iter = 200
+)
 }
 \arguments{
 \item{normalized.data}{A sparse matrix (dgCMatrix) containing
@@ -16,7 +23,7 @@ Default is \code{NULL}.}
 clusters in ICP. Default is \code{15}.}
 
 \item{d}{A numeric that defines how many cells per cluster should be
-down- and oversampled (d in N/k*d), when stratified.downsampling=FALSE,
+down- and oversampled (d in ceiling(N/k*d)), when stratified.downsampling=FALSE,
 or what fraction should be downsampled in the stratified approach
 ,stratified.downsampling=TRUE. Default is \code{0.3}.}
 
@@ -32,7 +39,7 @@ Default is \code{0.3}.}
 iterations performed until the algorithm ends. Default is \code{200}.}
 }
 \value{
-A list comprising the probability matrix and the clustering
+A list that includes the probability matrix and the clustering
 similarity measures: ARI, NMI, etc.
 }
 \description{

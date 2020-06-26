@@ -1,9 +1,12 @@
 Package: ILoReg
 Type: Package
-Title: ILoReg enables high-precision cell population identification from scRNA-Seq data
+Title: ILoReg: a tool for high-resolution cell population identification from scRNA-Seq data
 Version: 0.99.0
 Maintainer: Johannes Smolander <johannes.smolander@gmail.com>
-Description: ILoReg is a tool for identification of cell populations with subtle transcriptomic differences from scRNA-seq data.
+Description: ILoReg is a tool for identification of cell populations from scRNA-seq data. In particular, ILoReg is useful for finding cell populations with subtle transcriptomic differences.
+              The method utilizes a self-supervised learning method, called Iteratitive Clustering Projection (ICP), to find cluster probabilities, which
+              are used in noise reduction prior to PCA and the subsequent hierarchical clustering and t-SNE steps.
+              Additionally, functions for differential expression analysis to find gene markers for the populations and gene expression visualization are provided.
 Authors@R: c(person("Johannes", "Smolander",
              email = "johannes.smolander@gmail.com",
              role=c("cre", "aut")),
@@ -13,22 +16,23 @@ Authors@R: c(person("Johannes", "Smolander",
              role=c("aut")),
              person("Laura L", "Elo",
              role=c("aut")))
-License: GPL-3
+License: GPL-3 + file LICENSE
 Imports: Matrix, parallel, foreach, 
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
           DescTools, plyr, scales, pheatmap, reshape2, dplyr, doRNG, 
           SingleCellExperiment, SummarizedExperiment, S4Vectors, methods, stats,
           doSNOW, utils
-Depends: R (>= 3.6.0)
+Depends: R (>= 4.0.0)
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 biocViews: SingleCell, Software, Clustering, DimensionReduction, 
             RNASeq, Visualization, Transcriptomics, 
-            DataRepresentation, DifferentialExpression, Transcription
+            DataRepresentation, DifferentialExpression, Transcription,
+            GeneExpression
 NeedsCompilation: no
-URL: https://gitlab.utu.fi/pajosm/iloreg
-BugReports: https://gitlab.utu.fi/pajosm/iloreg
+URL: https://github.com/elolab/iloreg
+BugReports: https://github.com/elolab/iloreg

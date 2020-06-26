@@ -4,8 +4,12 @@
 \alias{SelectTopGenes}
 \title{Select top or bottom N genes based on a selection criterion}
 \usage{
-SelectTopGenes(gene.markers = NULL, top.N = 10,
-  criterion.type = "log2FC", reverse = FALSE)
+SelectTopGenes(
+  gene.markers = NULL,
+  top.N = 10,
+  criterion.type = "log2FC",
+  inverse = FALSE
+)
 }
 \arguments{
 \item{gene.markers}{A data frame of the gene markers found by
@@ -16,7 +20,7 @@ FindAllGeneMarkers function.}
 \item{criterion.type}{Which criterion to use for selecting the genes.
 Default is "log2FC".}
 
-\item{reverse}{Whether to select bottom instead of top N genes.
+\item{inverse}{Whether to select bottom instead of top N genes.
 Default is \code{FALSE}.}
 }
 \value{
@@ -25,6 +29,23 @@ an object of `data.frame` class
 \description{
 The SelectTopGenes function enables selecting top or bottom N genes based
 on a criterion (e.g. log2FC or adj.p.value).
+}
+\examples{
+library(SingleCellExperiment)
+sce <- SingleCellExperiment(assays = list(logcounts = pbmc3k_500))
+sce <- PrepareILoReg(sce)
+## These settings are just to accelerate the example, use the defaults.
+sce <- RunParallelICP(sce,L=2,threads=1,C=0.1,k=5,r=1)
+sce <- RunPCA(sce,p=5)
+sce <- HierarchicalClustering(sce)
+sce <- SelectKClusters(sce,K=5)
+gene_markers <- FindAllGeneMarkers(sce)
+## Select top 10 markers based on log2 fold-change
+top10_log2FC <- SelectTopGenes(gene_markers,
+                               top.N = 10,
+                               criterion.type = "log2FC",
+                               inverse = FALSE)
+
 }
 \keyword{N}
 \keyword{bottom}
