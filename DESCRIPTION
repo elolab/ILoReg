@@ -34,5 +34,5 @@ biocViews: SingleCell, Software, Clustering, DimensionReduction,
             DataRepresentation, DifferentialExpression, Transcription,
             GeneExpression
 NeedsCompilation: no
-URL: https://github.com/elolab/iloreg
-BugReports: https://github.com/elolab/iloreg
+URL: https://github.com/elolab/ILoReg
+BugReports: https://github.com/elolab/ILoReg
