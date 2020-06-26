@@ -28,7 +28,7 @@ Please follow this [link](https://github.com/elolab/iloreg/blob/master/vignettes
 
 ## Contact information
 
-If you have questions related to `ILoReg`, please contact us [here](https://github.com/elolab/iloreg/issues). 
+If you have questions related to `ILoReg`, please contact us [here](https://github.com/elolab/ILoReg/issues). 
 
 ## References
 
