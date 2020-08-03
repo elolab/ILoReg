@@ -18,7 +18,7 @@ text-align: justify}
   
 ```{r knitr-options, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
-opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
+opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5)
 ```
 
 
@@ -34,11 +34,13 @@ In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce 
 
 # Installation
 
-The latest version of `ILoReg` can be downloaded from GitHub and installed by executing the following command in the R console.
+`ILoReg` can be downloaded from Bioconductor and installed by executing the following command in the R console.
 
 
 ```{r eval = FALSE}
-devtools::install_github("elolab/ILoReg")
+if(!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("ILoReg")
 ```
 
 
@@ -73,7 +75,7 @@ In the following, we give a brief summary of the parameters.
 * $d$: A real number greater than $0$ and smaller than $1$ that determines how many cells $n$ are down- or oversampled from each cluster into the training data ($n= \lceil Nd/k \rceil$), where $N$ is the total number of cells (default $0.3$). Decreasing $d$ below $0.2$ is not recommended due to the increased risk of ICP becoming unstable ($k$ starts to decrease during the iteration). By contrast, increasing $d$ above 0.3 will generate more dissimilar ICP runs, which will decrease the resolution of the result.
 * $C$: A positive real number that rules the trade-off between correct classification and regularization in L1-regularized logistic regression: $$\displaystyle \min_w {\Vert w \Vert}_1 + C \sum_{i=1}^{n} \log (1+ e^{-y_i w^T w})$$ with the default value being $0.3$. Decreasing $C$ increases the stringency of the L1-regularized feature selection, i.e. less genes are selected into the logistic regression model. With a lower $C$ the outcome will be determined by fewer genes.
 * $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops (default $500$).
-* $L$: The number of ICP runs. The default is $200$, which should be generally used in all situations. For the toy dataset $L=30$ below is enough.
+* $L$: The number of ICP runs. The default is $200$, which should be generally used in all situations. For the toy dataset used in this example $L=30$ is enough.
 * $reg.type$: "L1" or "L2". "L2" denotes L2-regularization (ridge regression). The default is "L1" (lasso regresssion).
 * $threads$: The number of threads to use in parallel computing. The default is $0$: use all available threads but one. The parallelization can be disabled with $threads=1$. 
 
@@ -88,8 +90,6 @@ sce <- RunParallelICP(object = sce, k = 15,
                       d = 0.3, L = 30, 
                       r = 5, C = 0.3, 
                       reg.type = "L1", threads = 0)
-# At this point, saving the results is recommended.
-saveRDS(sce,file = "~/pbmc3k_500_iloreg.rds")
 ```
 
 
@@ -278,14 +278,6 @@ GeneHeatmap(sce,gene.markers = top10_log2FC)
 VlnPlot(sce,genes = c("CD3D"),return.plot = FALSE,rotate.x.axis.labels = TRUE)
 ```
 
-
-## Saving results
-
-Saving the results at the end of the workflow is recommended.
-
-```{r}
-saveRDS(sce,file = "~/pbmc3k_sce_final.rds")
-```
 
 
 

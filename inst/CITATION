@@ -1,16 +1,12 @@
-citHeader("To cite ILoReg in publications use:")
+note <- sprintf("R package version %s", meta$Version)
 
-citEntry(entry="article",
+bibentry(bibtype = "Article",
          title = "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data",
-         author = personList( as.person("Johannes Smolander"),
-                              as.person("Sini Junttila"),
-                              as.person("Mikko S Venäläinen"),
-                              as.person("Laura L Elo")),
+         author = c(person("Johannes", "Smolander"),
+                    person("Sini", "Junttila"),
+                    person("Mikko S", "Venalainen"),
+                    person("Laura L", "Elo")),
          year = 2020,
          journal = "BioRxiv",
-         url = "https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1",
-         textVersion =
-         paste("Johannes Smolander, et al. (2020):",
-               "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data.",
-               "BioRxiv, ",
-                "URL: https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1" ) )
+         note = note,
+         url = "https://www.biorxiv.org/content/10.1101/2020.01.20.912675v1")

@@ -1,7 +1,7 @@
 Package: ILoReg
 Type: Package
 Title: ILoReg: a tool for high-resolution cell population identification from scRNA-Seq data
-Version: 0.99.2
+Version: 0.99.3
 Description: ILoReg is a tool for identification of cell populations from scRNA-seq data. In particular, ILoReg is useful for finding cell populations with subtle transcriptomic differences.
               The method utilizes a self-supervised learning method, called Iteratitive Clustering Projection (ICP), to find cluster probabilities, which
               are used in noise reduction prior to PCA and the subsequent hierarchical clustering and t-SNE steps.
@@ -15,7 +15,7 @@ Authors@R: c(person("Johannes", "Smolander",
              role=c("aut")),
              person("Laura L", "Elo",
              role=c("aut")))
-License: GPL-3 + file LICENSE
+License: GPL-3
 Imports: Matrix, parallel, foreach, 
           aricode, LiblineaR, SparseM, ggplot2, cowplot, RSpectra, 
           umap, Rtsne, fastcluster, parallelDist, cluster, dendextend, 
@@ -34,4 +34,4 @@ biocViews: SingleCell, Software, Clustering, DimensionReduction,
             GeneExpression
 NeedsCompilation: no
 URL: https://github.com/elolab/ILoReg
-BugReports: https://github.com/elolab/ILoReg
+BugReports: https://github.com/elolab/ILoReg/issues
