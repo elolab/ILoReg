@@ -29,7 +29,7 @@ The figure below illustrates the workflows of `ILoReg` and a typical pipeline th
 
 ![*Figure: Workflows of `ILoReg` and a feature-selection based approach.*](figure.png){width=100%}
 
-In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction using **iterative clustering projection (ICP)**, yielding an $N \times k$ -dimensional probability matrix, which contains probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a novel self-supervised learning algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression. In the ILoReg consensus approach, ICP is run $L$ times and the $L$ probability matrices are merged into a joint probability matrix and subsequently transformed by principal component analysis (PCA) into a lower dimensional ($N \times p$) matrix (consensus matrix). The final clustering step is performed using hierarhical clustering by the Ward's method, after which the user can extract a clustering with $K$ consensus clusters. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP). Additionally, ILoReg provides user-friendly functions that enable identification of differentially expressed (DE) genes and visualization of gene expression.
+In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction using **iterative clustering projection (ICP)**, generating an $N \times k$ -dimensional probability matrix, which contains probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a novel self-supervised learning algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression. In the ILoReg consensus approach, ICP is run $L$ times and the $L$ probability matrices are merged into a joint probability matrix and subsequently transformed by principal component analysis (PCA) into a lower dimensional ($N \times p$) matrix (consensus matrix). The final clustering step is performed using hierarhical clustering by the Ward's method, after which the user can extract a clustering with $K$ consensus clusters. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP). Additionally, ILoReg provides user-friendly functions that enable identification of differentially expressed (DE) genes and visualization of gene expression.
 
 
 # Installation
@@ -46,12 +46,12 @@ BiocManager::install("ILoReg")
 
 # Example: Peripheral Blood Mononuclear Cells
 
-In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3].
+In the following, we go through the different steps of `ILoReg`'s workflow and demonstrate it using a peripheral blood mononuclear cell (PBMC) dataset. The toy dataset included in the `ILoReg` R package (`pbmc3k_500`) contains 500 cells that have been downsampled from the pbmc3k dataset [2]. The preprocessing was rerun with a newer reference genome (GRCh38.p12) and Cell Ranger v2.2.0 [3] to identify different immunoglobulin subpopulations in B-cells.
 
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
 
-The only required input for `ILoReg` is a gene expression matrix that has been normalized for the library size, with genes/features in rows and cells/samples in columns. The input can be of `matrix`, `data.frame` or `dgCMatrix` class, which is then transformed into a sparse object of `dgCMatrix` class. Please note that the method has been designed to work with **sparse data**, i.e. with a high proportion of zero values. If, for example, the features of your dataset have been standardized, the run time and the memory usage of `ILoReg` will likely be much higher.
+The only required input for `ILoReg` is a gene expression matrix that has been normalized to remove skewness, with genes/features in rows and cells/samples in columns. The input can be of `matrix`, `data.frame` or `dgCMatrix` class, which is then transformed into a sparse object of `dgCMatrix` class. Please note that the method has been designed to work with **sparse data**, i.e. with a high proportion of zero values. If, for example, the features of your dataset have been standardized, the run time and the memory usage of `ILoReg` will likely be much higher.
 
 
 
@@ -77,9 +77,10 @@ In the following, we give a brief summary of the parameters.
 * $r$: A positive integer that denotes the maximum number of reiterations performed until the ICP algorithm stops (default $500$).
 * $L$: The number of ICP runs. The default is $200$, which should be generally used in all situations. For the toy dataset used in this example $L=30$ is enough.
 * $reg.type$: "L1" or "L2". "L2" denotes L2-regularization (ridge regression). The default is "L1" (lasso regresssion).
-* $threads$: The number of threads to use in parallel computing. The default is $0$: use all available threads but one. The parallelization can be disabled with $threads=1$. 
+* $threads$: The number of threads to use in parallel computing. The default is $0$: use all available threads but one. The parallelization can be disabled with $threads=1$.
+* $icp.batch.size$: The batch size, i.e. how many cells to use in ICP. The default is $Inf$: use all cells from the data set. A smaller number decreases the run time. This is an experimental feature and has not been validated properly. 
 
-As general guidelines on how to fine-tune the parameters, we recommend leaving $C$, $r$ and $L$ as their defaults ($C=0.3$, $r=5$ and $L=200$). However, increasing $k$ from 15 to, for example, 30 can reveal new cell subsets that are of potential interest. Regarding $d$, increasing it to somewhere between 0.4-0.6 helps if the user wants lower resolution (less distinguishable populations). Setting $reg.type="L2"$ disables the feature selection in L1-regularization, and all the genes weights are consequently non-zero in the model, which typically leads to a lower resolution.
+As general guidelines on how to adjust the parameters, we recommend leaving $r$ and $L$ to their defaults ($r=5$ and $L=200$). However, increasing $k$ from 15 to e.g. 30 can reveal new cell subsets that are of interest. Regarding $d$, increasing it to somewhere between 0.4-0.6 helps if the user wants lower resolution (less distinguishable populations). Increasing $C$ from 0.3 to 1 reduces the number of distinguishable populations, as the logistic regression model filters out fewer genes.
 
 ```{r eval = TRUE}
 # ICP is stochastic. To obtain reproducible results, use set.seed().
@@ -307,7 +308,7 @@ sce <- RenameCluster(sce,old.cluster.name = 1,new.cluster.name = "A")
 ## Visualize with a custom annotation
 
 ```{r FigAnnotation, echo=TRUE, fig.height=5, fig.width=6, out.width = '100%',fig.align = "center",eval = TRUE}
-# Select a clustering with K=20 clusters
+# Select a clustering with K=5 clusters
 sce <- SelectKClusters(sce,K=5)
 # Generate a custom annotation with K=5 clusters and change the names to the five first alphabets.
 custom_annotation <- plyr::mapvalues(metadata(sce)$iloreg$clustering.manual,c(1,2,3,4,5),LETTERS[1:5])

@@ -44,7 +44,11 @@
 #' @param reg.type "L1" for LASSO and "L2" for Ridge. Default is "L1".
 #' @param max.iter A positive integer that denotes the maximum number of
 #' iterations performed until the algorithm ends. Default is \code{200}.
-#'
+#' @param icp.batch.size A positive integer that specifies how many cells 
+#' to randomly select for each ICP run from the complete data set. 
+#' This is a new feature intended to speed up the process
+#' with larger data sets. Default is \code{Inf}, which means using all cells.
+
 #' @return A list that includes the probability matrix and the clustering
 #' similarity measures: ARI, NMI, etc.
 #'
@@ -57,13 +61,22 @@
 #'
 #'
 RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
-                   reg.type = "L1", max.iter = 200) {
+                   reg.type = "L1", max.iter = 200,icp.batch.size=Inf) {
 
   first_round <- TRUE
   metrics <- NULL
   idents <- list()
   iterations <- 1
   probs <- NULL
+  
+  
+  if ((!is.infinite(icp.batch.size)) & icp.batch.size > 2)
+  {
+    normalized_data_whole <- normalized.data
+    randinds_batch <- sample(seq_len(ncol(normalized.data)),
+                             size = icp.batch.size,replace = FALSE)
+    normalized.data <- normalized.data[,randinds_batch]
+  }
 
   while (TRUE) {
 
@@ -135,8 +148,26 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
       break
     }
   }
-  # Step 5: Return result
-  return(list(probabilities=probs, metrics=metrics))
+  if (is.infinite(icp.batch.size))
+  {
+    # Step 5: Return result
+    return(list(probabilities=probs, metrics=metrics))
+    
+  } else {
+    res <- LogisticRegression(training.sparse.matrix = t(normalized.data),
+                              training.ident = ident_1, C = C,
+                              reg.type=reg.type,
+                              test.sparse.matrix = t(normalized_data_whole), d=d)
+    
+    names(res$predictions) <- colnames(normalized_data_whole)
+    rownames(res$probabilities) <- colnames(normalized_data_whole)
+    
+    # Projected cluster probabilities
+    probs <- res$probabilities
+    
+    return(list(probabilities=probs, metrics=metrics))
+    
+  }
 }
 
 #' @title Down- and oversample data

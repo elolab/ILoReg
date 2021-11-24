@@ -135,6 +135,10 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #' (threads) to use in parallel computation.
 #' Set \code{1} to disable parallelism altogether or \code{0} to use all
 #' available threas except one. Default is \code{0}.
+#' @param icp.batch.size A positive integer that specifies how many cells 
+#' to randomly select for each ICP run from the complete data set. 
+#' This is a new feature intended to speed up the process
+#' with larger data sets. Default is \code{Inf}, which means using all cells.
 #'
 #' @name RunParallelICP
 #'
@@ -164,7 +168,7 @@ setMethod("PrepareILoReg", signature(object = "SingleCellExperiment"),
 #'
 RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
                                                 reg.type, max.iter,
-                                                threads){
+                                                threads,icp.batch.size){
 
   if (!is(object,"SingleCellExperiment")) {
     stop("object must of 'sce' class")
@@ -226,6 +230,21 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
   } else {
     metadata(object)$iloreg$threads <- threads
   }
+  
+  
+
+  if (!is.infinite(icp.batch.size))
+  {
+    if (!is.numeric(icp.batch.size) | icp.batch.size <= 2 | icp.batch.size%%1 != 0)
+    {
+      stop("icp.batch.size must be a positive integer > 2 or Inf (0 = use all cells in ICP)")
+    } else {
+      metadata(object)$iloreg$icp.batch.size <- icp.batch.size
+    }
+    
+  }
+  
+  
 
   parallelism <- TRUE
 
@@ -257,7 +276,8 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
                    .options.snow = opts)  %dorng% {
                      try({
                        RunICP(normalized.data = dataset, k = k, d = d, r = r,
-                              C = C, reg.type = reg.type, max.iter = max.iter)
+                              C = C, reg.type = reg.type, max.iter = max.iter,
+                              icp.batch.size=icp.batch.size)
                      })
                    }
     close(pb)
@@ -268,14 +288,22 @@ RunParallelICP.SingleCellExperiment <- function(object, k, d, L, r, C,
     out <- list()
     for (l in seq_len(L)) {
       try({
+        message(paste0("ICP run: ",l))
         res <- RunICP(normalized.data = dataset, k = k, d = d, r = r,
-                      C = C, reg.type = reg.type, max.iter = max.iter)
+                      C = C, reg.type = reg.type, max.iter = max.iter,
+                      icp.batch.size=icp.batch.size)
         out[[l]] <- res
       })
     }
   }
   metadata(object)$iloreg$joint.probability <-
     lapply(out,function(x) x$probabilities)
+  
+  sds <- unlist(lapply(metadata(object)$iloreg$joint.probability,sd))
+  
+  metadata(object)$iloreg$joint.probability <-
+    metadata(object)$iloreg$joint.probability[order(sds)]
+  
   metadata(object)$iloreg$metrics <-
     lapply(out,function(x) x$metrics)
 

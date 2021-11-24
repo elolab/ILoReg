@@ -15,7 +15,8 @@ RunParallelICP.SingleCellExperiment(
   C,
   reg.type,
   max.iter,
-  threads
+  threads,
+  icp.batch.size
 )
 
 \S4method{RunParallelICP}{SingleCellExperiment}(
@@ -27,7 +28,8 @@ RunParallelICP.SingleCellExperiment(
   C = 0.3,
   reg.type = "L1",
   max.iter = 200,
-  threads = 0
+  threads = 0,
+  icp.batch.size = Inf
 )
 }
 \arguments{
@@ -77,6 +79,11 @@ Default is \code{200}.}
 (threads) to use in parallel computation.
 Set \code{1} to disable parallelism altogether or \code{0} to use all
 available threas except one. Default is \code{0}.}
+
+\item{icp.batch.size}{A positive integer that specifies how many cells 
+to randomly select for each ICP run from the complete data set. 
+This is a new feature intended to speed up the process
+with larger data sets. Default is \code{Inf}, which means using all cells.}
 }
 \value{
 an object of \code{SingleCellExperiment} class

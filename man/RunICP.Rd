@@ -11,7 +11,8 @@ RunICP(
   r = 5,
   C = 5,
   reg.type = "L1",
-  max.iter = 200
+  max.iter = 200,
+  icp.batch.size = Inf
 )
 }
 \arguments{
@@ -37,6 +38,11 @@ Default is \code{0.3}.}
 
 \item{max.iter}{A positive integer that denotes the maximum number of
 iterations performed until the algorithm ends. Default is \code{200}.}
+
+\item{icp.batch.size}{A positive integer that specifies how many cells 
+to randomly select for each ICP run from the complete data set. 
+This is a new feature intended to speed up the process
+with larger data sets. Default is \code{Inf}, which means using all cells.}
 }
 \value{
 A list that includes the probability matrix and the clustering

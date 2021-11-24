@@ -3,3 +3,16 @@ ILoReg News
 ILoReg 0.99.0 (Release date: 2020-06-25):
 
     * The first version 0.99.0 is submitted to Bioconductor
+
+ILoReg 0.99.5 (Release date: 2021-11-24):
+
+    * An updated version 0.99.5 is submitted to Bioconductor.
+    Includes an experimental feature that can be used to accelerate the ICP.
+    "icp.batch.size" parameter in RunParallelICP can be set to, e.g. 2000
+    to use 2000 cells when learning the model. In addition, when running ICP
+    in parallel, the order of the ICP runs in the result list was slightly
+    random, which affected the sign of the principal components and
+    the visualizations using t-SNE/UMAP. The ICP runs are now sorted based on
+    the standard deviation of the probability matrices, which will very likely
+    always produce the same order and the same visualizations.
+    
