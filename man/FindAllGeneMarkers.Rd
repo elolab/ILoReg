@@ -15,7 +15,6 @@ FindAllGeneMarkers.SingleCellExperiment(
   min.diff.pct,
   min.cells.group,
   max.cells.per.cluster,
-  pseudocount.use,
   return.thresh,
   only.pos
 )
@@ -29,7 +28,6 @@ FindAllGeneMarkers.SingleCellExperiment(
   min.diff.pct = NULL,
   min.cells.group = 3,
   max.cells.per.cluster = NULL,
-  pseudocount.use = 1,
   return.thresh = 0.01,
   only.pos = FALSE
 )
@@ -46,8 +44,7 @@ Default is "manual".}
 AKA Mann-Whitney U test) is supported at the moment.}
 
 \item{log2fc.threshold}{Filters out genes that have log2 fold-change of the
-averaged gene expression values (with the pseudo-count value added to the
-averaged values before division if pseudocount.use > 0) below this threshold.
+averaged gene expression values below this threshold.
 Default is \code{0.25}.}
 
 \item{min.pct}{Filters out genes that have dropout rate (fraction of cells
@@ -66,10 +63,6 @@ Default is \code{3}.}
 \item{max.cells.per.cluster}{The maximun number of cells per cluster if
 downsampling is performed to speed up the DE analysis.
 Default is \code{NULL}, i.e. no downsampling.}
-
-\item{pseudocount.use}{A positive integer, which is added to
-the average gene expression values before calculating the fold-change,
-assuring that no divisions by zero occur. Default is \code{1}.}
 
 \item{return.thresh}{If only.pos=TRUE, then return only genes that have the
 adjusted p-value (adjusted by the Bonferroni method) below or equal to this

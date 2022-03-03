@@ -125,7 +125,6 @@ setGeneric("FindAllGeneMarkers", signature = "object",
                     min.diff.pct = NULL,
                     min.cells.group = 3,
                     max.cells.per.cluster = NULL,
-                    pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
              standardGeneric("FindAllGeneMarkers")
@@ -143,7 +142,6 @@ setGeneric("FindGeneMarkers", signature = "object",
                     min.diff.pct = NULL,
                     min.cells.group = 3,
                     max.cells.per.cluster = NULL,
-                    pseudocount.use = 1,
                     return.thresh = 0.01,
                     only.pos = FALSE) {
              standardGeneric("FindGeneMarkers")

@@ -1293,8 +1293,7 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' @param test Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 #' AKA Mann-Whitney U test) is supported at the moment.
 #' @param log2fc.threshold Filters out genes that have log2 fold-change of the
-#' averaged gene expression values (with the pseudo-count value added to the
-#' averaged values before division if pseudocount.use > 0) below this threshold.
+#' averaged gene expression values below this threshold.
 #' Default is \code{0.25}.
 #' @param min.pct Filters out genes that have dropout rate (fraction of cells
 #' expressing a gene) below this threshold in both comparison groups
@@ -1309,9 +1308,6 @@ setMethod("ClusteringScatterPlot", signature(object = "SingleCellExperiment"),
 #' @param max.cells.per.cluster The maximun number of cells per cluster if
 #' downsampling is performed to speed up the DE analysis.
 #' Default is \code{NULL}, i.e. no downsampling.
-#' @param pseudocount.use A positive integer, which is added to
-#' the average gene expression values before calculating the fold-change,
-#' assuring that no divisions by zero occur. Default is \code{1}.
 #' @param return.thresh If only.pos=TRUE, then return only genes that have the
 #' adjusted p-value (adjusted by the Bonferroni method) below or equal to this
 #' threshold. Default is \code{0.01}.
@@ -1348,7 +1344,6 @@ FindAllGeneMarkers.SingleCellExperiment <- function(object,
                                                     min.diff.pct,
                                                     min.cells.group,
                                                     max.cells.per.cluster,
-                                                    pseudocount.use,
                                                     return.thresh,
                                                     only.pos) {
 
@@ -1450,8 +1445,8 @@ FindAllGeneMarkers.SingleCellExperiment <- function(object,
     cluster_aves <- apply(data_cluster,1,mean)
     other_aves <- apply(data_other,1,mean)
 
-    log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
-
+    log2FC <- cluster_aves - other_aves
+    
     genes_to_include <- rownames(data_cluster)[log2FC >= log2fc.threshold | log2FC <= -log2fc.threshold]
 
     data_cluster <- data_cluster[genes_to_include,,drop=FALSE]
@@ -1526,8 +1521,7 @@ setMethod("FindAllGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @param test Which test to use. Only "wilcoxon" (the Wilcoxon rank-sum test,
 #' AKA Mann-Whitney U test) is supported at the moment.
 #' @param logfc.threshold Filters out genes that have log2 fold-change of the
-#' averaged gene expression values (with the pseudo-count value added to the
-#' averaged values before division if pseudocount.use > 0) below this threshold.
+#' averaged gene expression values below this threshold.
 #' Default is \code{0.25}.
 #' @param min.pct Filters out genes that have dropout rate (fraction of cells
 #' expressing a gene) below this threshold in both comparison groups
@@ -1542,9 +1536,6 @@ setMethod("FindAllGeneMarkers", signature(object = "SingleCellExperiment"),
 #' @param max.cells.per.cluster The maximun number of cells per cluster
 #' if downsampling is performed to speed up the DE analysis.
 #' Default is \code{NULL}, i.e. no downsampling.
-#' @param pseudocount.use A positive integer, which is added
-#' to the average gene expression values before calculating the fold-change.
-#' This makes sure that no divisions by zero occur. Default is \code{1}.
 #' @param return.thresh If only.pos=TRUE, then return only genes that
 #' have the adjusted p-value (adjusted by the Bonferroni method) below or
 #' equal to this threshold.  Default is \code{0.01}.
@@ -1584,7 +1575,6 @@ FindGeneMarkers.SingleCellExperiment <- function(object,
                                                  min.diff.pct,
                                                  min.cells.group,
                                                  max.cells.per.cluster,
-                                                 pseudocount.use,
                                                  return.thresh,
                                                  only.pos) {
 
@@ -1711,7 +1701,7 @@ FindGeneMarkers.SingleCellExperiment <- function(object,
   cluster_aves <- apply(data_cluster,1,mean)
   other_aves <- apply(data_other,1,mean)
 
-  log2FC <- log2((cluster_aves+pseudocount.use)/(other_aves+pseudocount.use))
+  log2FC <- cluster_aves - other_aves
 
   genes_to_include <- rownames(data_cluster)[log2FC >= logfc.threshold | log2FC <= -logfc.threshold]
 

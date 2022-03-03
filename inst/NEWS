@@ -4,15 +4,19 @@ ILoReg 0.99.0 (Release date: 2020-06-25):
 
     * The first version 0.99.0 is submitted to Bioconductor
 
-ILoReg 0.99.5 (Release date: 2021-11-24):
+ILoReg 0.99.5 (Release date: 2022-03-03):
 
-    * An updated version 0.99.5 is submitted to Bioconductor.
+    * An updated version 0.99.5 is submitted to GitHub.
     Includes an experimental feature that can be used to accelerate the ICP.
     "icp.batch.size" parameter in RunParallelICP can be set to, e.g. 2000
-    to use 2000 cells when learning the model. In addition, when running ICP
-    in parallel, the order of the ICP runs in the result list was slightly
-    random, which affected the sign of the principal components and
+    to use 2000 cells when learning the model. When running ICP
+    in parallel, the order of the ICP runs in the result list was previously 
+    random, which affected the the principal components and
     the visualizations using t-SNE/UMAP. The ICP runs are now sorted based on
     the standard deviation of the probability matrices, which will very likely
-    always produce the same order and the same visualizations.
+    always produce the same order and the same visualizations. Finally, there
+    was one bug that affected the DE analysis. The logFC values were by mistake
+    retransformed to log-scale. Now the average values of the two groups are
+    subtracted. The pseudocount.use parameter was removed. The method now
+    assumes that the input data are log-transformed.
     

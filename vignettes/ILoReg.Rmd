@@ -23,13 +23,13 @@ opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5)
 
 
 # Introduction
-`ILoReg` is a novel tool for cell population identification from single-cell RNA-seq (scRNA-seq) data. In our study [1], we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, rare cell populations that other scRNA-seq data analysis pipelines were unable to identify. 
+`ILoReg` is a tool for cell population identification from single-cell RNA-seq (scRNA-seq) data. In our paper [1], we showed that `ILoReg` was able to identify, by both unsupervised clustering and visually, rare cell populations that other scRNA-seq data analysis pipelines were unable to identify. 
 
 The figure below illustrates the workflows of `ILoReg` and a typical pipeline that applies feature selection prior to dimensionality reduction by principal component analysis (PCA).
 
 ![*Figure: Workflows of `ILoReg` and a feature-selection based approach.*](figure.png){width=100%}
 
-In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction using **iterative clustering projection (ICP)**, generating an $N \times k$ -dimensional probability matrix, which contains probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a novel self-supervised learning algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression. In the ILoReg consensus approach, ICP is run $L$ times and the $L$ probability matrices are merged into a joint probability matrix and subsequently transformed by principal component analysis (PCA) into a lower dimensional ($N \times p$) matrix (consensus matrix). The final clustering step is performed using hierarhical clustering by the Ward's method, after which the user can extract a clustering with $K$ consensus clusters. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP). Additionally, ILoReg provides user-friendly functions that enable identification of differentially expressed (DE) genes and visualization of gene expression.
+In contrast to most scRNA-seq data analysis pipelines, `ILoReg` does not reduce the dimensionality of the gene expression matrix by feature selection. Instead, it performs probabilistic feature extraction using **iterative clustering projection (ICP)**, generating an $N \times k$ -dimensional probability matrix, which contains probabilities of each of the $N$ cells belonging to the $k$ clusters. ICP is a novel self-supervised learning algorithm that iteratively seeks a clustering with $k$ clusters that maximizes the adjusted Rand index (ARI) between the clustering $C$ and its projection $C'$ by L1-regularized logistic regression. In the ILoReg consensus approach, ICP is run $L$ times and the $L$ probability matrices are merged into a joint probability matrix and subsequently transformed by principal component analysis (PCA) into a lower dimensional ($N \times p$) matrix (consensus matrix). The final clustering step is performed using hierarhical clustering by the Ward's method, after which the user can extract a clustering with $K$ consensus clusters. However, the user can also use any other clustering method at this point. Two-dimensional visualization is supported using two popular nonlinear dimensionality reduction methods: *t*-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP). Additionally, ILoReg provides user-friendly functions that enable identification of differentially expressed (DE) genes and visualization of gene expression.
 
 
 # Installation
@@ -51,7 +51,7 @@ In the following, we go through the different steps of `ILoReg`'s workflow and d
 
 ## Setup a SingleCellExperiment object and prepare it for ILoReg analysis
 
-The only required input for `ILoReg` is a gene expression matrix that has been normalized to remove skewness, with genes/features in rows and cells/samples in columns. The input can be of `matrix`, `data.frame` or `dgCMatrix` class, which is then transformed into a sparse object of `dgCMatrix` class. Please note that the method has been designed to work with **sparse data**, i.e. with a high proportion of zero values. If, for example, the features of your dataset have been standardized, the run time and the memory usage of `ILoReg` will likely be much higher.
+The only required input for `ILoReg` is a log-transformed, normalized gene expression matrix that has been, with genes/features in rows and cells/samples in columns. The input can be of `matrix`, `data.frame` or `dgCMatrix` class, which is then transformed into a sparse object of `dgCMatrix` class. Please note that the method has been designed to work with **sparse data**, i.e. with a high proportion of zero values. If, for example, the features of your dataset have been standardized, the run time and the memory usage of `ILoReg` will likely be much higher.
 
 
 
@@ -185,7 +185,6 @@ gene_markers <- FindAllGeneMarkers(sce,
                                    log2fc.threshold = 0.25,
                                    min.pct = 0.25,
                                    min.diff.pct = NULL,
-                                   pseudocount.use = 1,
                                    min.cells.group = 3,
                                    return.thresh = 0.01,
                                    only.pos = TRUE,
@@ -378,7 +377,7 @@ sessionInfo()
 
 # References 
 
-1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo. "ILoReg enables high-resolution cell population identification from single-cell RNA-seq data". bioRxiv (2020).
+1. Johannes Smolander, Sini Junttila, Mikko S Venäläinen, Laura L Elo, ILoReg: a tool for high-resolution cell population identification from single-cell RNA-seq data, Bioinformatics, Volume 37, Issue 8, 15 April 2021, Pages 1107–1114, [https://doi.org/10.1093/bioinformatics/btaa919](https://doi.org/10.1093/bioinformatics/btaa919)
 2. "3k PBMCs from a Healthy Donor". [10X Genomics](https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k).
 3. "What is Cell Ranger?" [10X Genomics](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger).
 
