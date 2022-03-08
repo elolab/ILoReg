@@ -20,3 +20,8 @@ ILoReg 0.99.5 (Release date: 2022-03-03):
     subtracted. The pseudocount.use parameter was removed. The method now
     assumes that the input data are log-transformed.
     
+
+ILoReg 0.99.6 (Release date: 2022-03-08):
+
+    * An updated version 0.99.6 is submitted to GitHub. threads=1 prints now
+    information that is helpful in debugging.

@@ -101,14 +101,21 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     # Projected cluster probabilities
     probs <- res$probabilities
 
+    message(paste0("probability matrix dimensions = ",paste(dim(probs),collapse = " ")))
+    
     # Projected clusters
     ident_2 <- res$predictions
 
     # Safety procedure: If k drops to 1, start from the beginning.
     # However, k should NOT decrease during the iteration when
     # the down- and oversampling approach is used for the balancing training data.
-    if (length(levels(factor(as.character(ident_2)))) < 2)
+    if (length(levels(factor(as.character(ident_2)))) < k)
     {
+      message(paste0("k decreased, starting from the beginning... ", 
+                     "consider increasing d to 0.5 and C to 1 ", 
+                     "or increasing the ICP batch size ",
+                     "and check the input data ",
+                     "(scaled dense data might cause problems)"))
       first_round <- TRUE
       metrics <- NULL
       idents <- list()
@@ -117,6 +124,10 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     }
 
     # Step 3: compare clustering similarity between clustering and projection
+    message(paste0("EPOCH: ",iterations))
+    message(paste0("current clustering = ",paste(table(ident_1),collapse = " ")))
+    message(paste0("projected clustering = ",paste(table(ident_2),collapse = " ")))
+    
     comp_clust <- clustComp(c1 = ident_1, c2 = ident_2)
 
     if(first_round & comp_clust$ARI <= 0)
@@ -132,6 +143,7 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     # Step 3.2: If ARI increased, proceed to next iteration round
     else {
       # Update clustering to the predicted clusters
+      message(paste0("ARI=",as.character(comp_clust$ARI)))
       ident_1 <- ident_2
       first_round <- FALSE
       metrics <- cbind(metrics,comp_clust)
@@ -154,6 +166,7 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     return(list(probabilities=probs, metrics=metrics))
     
   } else {
+    cat("projecting the whole data set...")
     res <- LogisticRegression(training.sparse.matrix = t(normalized.data),
                               training.ident = ident_1, C = C,
                               reg.type=reg.type,
@@ -164,6 +177,11 @@ RunICP <- function(normalized.data = NULL,k = 15, d = 0.3, r = 5, C = 5,
     
     # Projected cluster probabilities
     probs <- res$probabilities
+    
+    message(" success!")
+    
+    
+    message(paste(dim(probs),collapse = " "))
     
     return(list(probabilities=probs, metrics=metrics))
     
